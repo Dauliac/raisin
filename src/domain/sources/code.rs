@@ -1,0 +1,38 @@
+use super::file::File;
+use crate::core::domain::Value;
+
+use std::any::Any;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct Coordinate {
+    pub start_line: u64,
+    pub end_line: u64,
+    pub start_char: u64,
+    pub end_char: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct Code {
+    pub coordinate: Coordinate,
+    pub file: File,
+}
+
+impl Value for Code {
+    fn equals(&self, value: &dyn Any) -> bool {
+        let code = match value.downcast_ref::<Code>() {
+            Some(value) => value,
+            None => return false,
+        };
+
+        self.coordinate.start_line == code.coordinate.start_line
+            && self.coordinate.end_line == code.coordinate.end_line
+            && self.coordinate.start_char == code.coordinate.start_char
+            && self.coordinate.end_char == code.coordinate.end_char
+            && self.coordinate.end_char == code.coordinate.end_char
+    }
+}
+impl Code {
+    pub fn new(coordinate: Coordinate, file: File) -> Code {
+        Code { coordinate, file }
+    }
+}
