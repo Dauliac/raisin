@@ -1,26 +1,21 @@
-use std::path::PathBuf;
+use std::rc::Rc;
 use uuid::Uuid;
 
 use crate::app::cqrs::Command;
 use crate::app::dtos::sources::Path as PathDTO;
 use crate::core::domain::Entity;
 use crate::domain::sources::sources::Error;
+use crate::infra::services::sources::source_reader::SourceReader;
 
-pub struct FilesWereDiscovered<F>
-where
-    F: Fn() -> Result<Vec<PathDTO>, Error>,
-{
+pub struct FilesWereDiscovered {
     uuid: Uuid,
-    pub path: PathBuf,
+    pub path: String,
+    pub service: Option<Rc<SourceReader>>,
     // TODO: dauliac add Result into commands
     pub result: Option<Result<Vec<PathDTO>, Error>>,
-    callback: F,
 }
 
-impl<F> Entity for FilesWereDiscovered<F>
-where
-    F: Fn() -> Result<Vec<PathDTO>, Error>,
-{
+impl Entity for FilesWereDiscovered {
     fn get_uuid(&self) -> Uuid {
         self.uuid
     }
@@ -29,25 +24,27 @@ where
     }
 }
 
-impl<F> Command for FilesWereDiscovered<F>
-where
-    F: Fn() -> Result<Vec<PathDTO>, Error>,
-{
-    fn run(&mut self) {
-        self.result = Some((self.callback)());
-    }
-}
-
-impl<F> FilesWereDiscovered<F>
-where
-    F: Fn() -> Result<Vec<PathDTO>, Error>,
-{
-    pub fn new(path: PathBuf, callback: F) -> Self {
+impl FilesWereDiscovered {
+    pub fn new(path: String) -> Self {
         Self {
             uuid: Uuid::new_v4(),
             path,
-            callback,
+            service: None,
             result: None,
         }
+    }
+}
+
+pub enum SourcesCommand {
+    DiscoverFiles(FilesWereDiscovered),
+}
+
+impl Command for FilesWereDiscovered {
+    fn run(&mut self) {
+        // self.result = Some((self.callback)());
+        self.result = match &self.service {
+            Some(service) => Some(service.run()),
+            None => None,
+        };
     }
 }

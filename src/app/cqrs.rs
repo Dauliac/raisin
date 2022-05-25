@@ -24,6 +24,14 @@ pub struct RamCommandHandler {
     queue: VecDeque<Box<dyn Command>>,
 }
 
+impl RamCommandHandler {
+    pub fn new() -> Self {
+        Self {
+            queue: VecDeque::new(),
+        }
+    }
+}
+
 pub trait CommandHandler {
     fn handle(&mut self, command: Box<dyn Command>);
     fn run(&mut self);
@@ -32,6 +40,7 @@ pub trait CommandHandler {
 impl CommandHandler for RamCommandHandler {
     fn handle(&mut self, command: Box<dyn Command>) {
         self.queue.push_back(command);
+        self.run();
     }
     fn run(&mut self) {
         match self.queue.pop_front() {
@@ -42,3 +51,4 @@ impl CommandHandler for RamCommandHandler {
 }
 
 pub mod commands;
+pub mod queries;

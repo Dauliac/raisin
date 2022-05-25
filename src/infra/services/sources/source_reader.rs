@@ -11,20 +11,17 @@ pub struct Config {
 
 pub struct SourceReader {
     config: Config,
-    files: Vec<PathDTO>,
-    failed_files: Vec<PathDTO>,
 }
 
 impl SourceReader {
     pub fn new(conf: Config) -> SourceReader {
-        SourceReader {
-            config: conf,
-            files: Vec::new(),
-            failed_files: Vec::new(),
-        }
+        SourceReader { config: conf }
     }
 
-    pub fn run(&mut self) -> Result<Vec<PathDTO>, Error> {
+    pub fn run(&self) -> Result<Vec<PathDTO>, Error> {
+        let mut files = Vec::new();
+        let mut failed_files = Vec::new();
+
         let path = Path::new(self.config.path.as_str());
         if !path.exists() {
             return Err(Error::NotExists(path.to_owned()));
@@ -36,34 +33,31 @@ impl SourceReader {
             let metadata = file.metadata();
 
             if metadata.is_err() {
-                self.failed_files
-                    .push(file.into_path().to_str().unwrap().to_string());
+                failed_files.push(file.into_path().to_str().unwrap().to_string());
                 continue;
             }
             let metadata = metadata.unwrap();
             if metadata.is_file() {
-                self.files
-                    .push(file.into_path().to_str().unwrap().to_string());
+                files.push(file.into_path().to_str().unwrap().to_string());
                 continue;
             } else if metadata.is_dir() {
                 continue;
             } else {
-                self.files
-                    .push(file.into_path().to_str().unwrap().to_string());
+                files.push(file.into_path().to_str().unwrap().to_string());
             }
         }
 
-        if path.is_dir() && self.files.is_empty() {
+        if path.is_dir() && files.is_empty() {
             return Err(Error::EmptyDir(path.to_owned()));
         }
 
-        if !self.failed_files.is_empty() {
+        if !failed_files.is_empty() {
             return Err(Error::FailedToIndexFiles {
-                files: self.files.to_owned(),
-                failed_files: self.failed_files.to_owned(),
+                files: files.to_owned(),
+                failed_files: failed_files.to_owned(),
             });
         }
-        return Ok(self.files.to_owned());
+        return Ok(files.to_owned());
     }
 }
 
