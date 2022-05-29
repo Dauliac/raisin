@@ -6,7 +6,8 @@ use crate::app::cqrs::queries::file::SourcesQueries;
 use crate::app::cqrs::CommandHandler;
 use crate::core::domain::Entity;
 use crate::domain::repository::Repository;
-use crate::domain::sources::sources::{Error, Sources};
+use crate::domain::sources::sources::Sources;
+use crate::infra::services::sources::source_reader::Error;
 use crate::infra::services::sources::source_reader::SourceReader;
 
 pub struct Config {
@@ -59,6 +60,7 @@ impl Repository<SourcesCommand, SourcesQueries, Error> for SourcesRepository {
         // }
         return Ok(());
     }
+
     fn read(&mut self, query: SourcesQueries) -> Result<(), Error> {
         return Ok(());
     }

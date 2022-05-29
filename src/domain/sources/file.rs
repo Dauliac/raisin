@@ -7,9 +7,9 @@ use uuid::Uuid;
 #[derive(Debug, Clone)]
 pub struct File {
     uuid: Uuid,
-    path: PathBuf,
+    pub path: PathBuf,
     lines: HashMap<u64, String>,
-    includes: Vec<Uuid>,
+    pub includes: Vec<Uuid>,
 }
 
 impl Entity for File {
@@ -33,6 +33,10 @@ impl File {
 
     pub fn get_path(&self) -> PathBuf {
         self.path.to_owned()
+    }
+
+    pub fn get_lines(&self) -> std::collections::hash_map::Iter<'_, u64, String> {
+        self.lines.iter()
     }
     // pub fn insert_content(&mut self, code: Code) {
     //     self.lines.insert(code.coordinate.start_line, code);

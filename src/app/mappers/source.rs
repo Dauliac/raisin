@@ -12,9 +12,9 @@ impl From<Uuid> for UuidDTO {
     }
 }
 
-impl From<UuidDTO> for Uuid {
-    fn from(uuid: UuidDTO) -> Self {
-        Uuid::parse_str(uuid)
+impl Into<Uuid> for UuidDTO {
+    fn into(self) -> Uuid {
+        Uuid::parse_str(self)
     }
 }
 
@@ -24,23 +24,51 @@ impl From<Path> for PathDTO {
     }
 }
 
-impl From<PathDTO> for Path {
-    fn from(path: PathDTO) -> Self {
-        Path::new(path.as_str())
+impl Into<Path> for PathDTO {
+    fn into(self) -> Path {
+        Path::new(self.as_str())
     }
 }
 
 impl From<File> for FileDTO {
     fn from(file: File) -> Self {
+        let mut lines = Vec::new();
+        lines.extend(
+            file.get_lines()
+                .map(|(line, code)| (line.clone(), code.clone())),
+        );
+
+        let includes = Vec::new();
+        for (uuid) in file.includes.iter() {
+            let file: UuidDTO = UuidDTO::from(uuid);
+            sources.push(file);
+        }
+
         FileDTO {
             uuid: UuidDTO::from(file.get_uuid()),
+            path: file.get_path(),
+            lines,
+            includes,
         }
     }
 }
 
-impl From<FileDTO> for File {
-    fn from(file: FileDTO) -> Self {
-        Sources {}
+impl Into<File> for FileDTO {
+    fn into(self) -> File {
+        let mut lines = Vec::new();
+        lines.clone_from(self.lines);
+
+        for (uuid) in self.includes.iter() {
+            let file: Uuid = uuid.into();
+            includes.push(file);
+        }
+
+        File {
+            uuid: self.uuid,
+            path: self.path,
+            lines,
+            includes,
+        }
     }
 }
 
@@ -54,8 +82,8 @@ impl From<Sources> for SourcesDTO {
     }
 }
 
-impl From<SourcesDTO> for Sources {
-    fn from(sources: SourcesDTO) -> Self {
+impl Into<Sources> for SourcesDTO {
+    fn into(self) -> Sources {
         Sources {}
     }
 }

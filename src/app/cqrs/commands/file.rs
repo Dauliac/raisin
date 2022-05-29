@@ -2,9 +2,9 @@ use std::rc::Rc;
 use uuid::Uuid;
 
 use crate::app::cqrs::Command;
-use crate::app::dtos::sources::Path as PathDTO;
+use crate::app::dtos::sources::Sources as SourcesDTO;
 use crate::core::domain::Entity;
-use crate::domain::sources::sources::Error;
+use crate::infra::services::sources::source_reader::Error;
 use crate::infra::services::sources::source_reader::SourceReader;
 
 pub struct FilesWereDiscovered {
@@ -12,7 +12,7 @@ pub struct FilesWereDiscovered {
     pub path: String,
     pub service: Option<Rc<SourceReader>>,
     // TODO: dauliac add Result into commands
-    pub result: Option<Result<Vec<PathDTO>, Error>>,
+    pub result: Option<Result<SourcesDTO, Error>>,
 }
 
 impl Entity for FilesWereDiscovered {

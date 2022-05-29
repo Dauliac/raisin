@@ -3,13 +3,15 @@ use std::collections::HashMap;
 pub type Uuid = String;
 pub type Path = String;
 
+#[derive(Debug, Clone)]
 pub struct File {
-    uuid: Uuid,
-    path: Path,
-    lines: HashMap<u64, String>,
-    includes: Vec<Uuid>,
+    pub uuid: Uuid,
+    pub path: Path,
+    pub lines: HashMap<u64, String>,
+    pub includes: Vec<Uuid>,
 }
 
+#[derive(Debug, Clone)]
 pub struct Sources {
     pub uuid: Uuid,
     pub files: HashMap<Uuid, File>,

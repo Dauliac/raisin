@@ -2,7 +2,6 @@ use std::{
     collections::{hash_map::Iter, HashMap},
     path::PathBuf,
 };
-use thiserror::Error;
 use uuid::Uuid;
 
 use super::file::File;
@@ -37,22 +36,7 @@ impl Sources {
         self.files.insert(file.get_uuid(), file);
     }
 
-    pub fn iter(&self) -> Iter<Uuid, File> {
+    pub fn get_files(&self) -> Iter<Uuid, File> {
         self.files.iter()
     }
-}
-
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("given sources `${0}` not exists")]
-    NotExists(PathBuf),
-    #[error("given dir `${0}` is empty")]
-    EmptyDir(PathBuf),
-    #[error("Unable to read current dir `${0}`")]
-    PathNotReadable(PathBuf),
-    #[error("Unable to index some files `{failed_files:?}`")]
-    FailedToIndexFiles {
-        files: Vec<String>,
-        failed_files: Vec<String>,
-    },
 }
