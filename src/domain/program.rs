@@ -39,16 +39,18 @@ enum Paradigms {
     Bdd,
 }
 
-trait Language {
+pub trait Language {
     const NAME: &'static str;
     const IS_OBJECT_ORIENTED: bool;
     const IS_FUNCTIONAL_ORIENTED: bool;
     const HAS_HEADER: bool;
     const HAS_GENERICS: bool;
     const IS_BDD: bool;
+    const EXTENTIONS: Vec<&'static str>;
 }
 
-pub struct Cpp;
+#[derive(Debug, Clone)]
+pub struct Cpp {}
 impl Language for Cpp {
     const NAME: &'static str = "c++";
     const IS_OBJECT_ORIENTED: bool = true;
@@ -56,8 +58,10 @@ impl Language for Cpp {
     const HAS_HEADER: bool = true;
     const HAS_GENERICS: bool = true;
     const IS_BDD: bool = false;
+    const EXTENTIONS: Vec<&'static str> = vec!["hpp", "cpp", "h", "c++"];
 }
 
+#[derive(Debug, Clone)]
 pub struct Rust;
 impl Language for Rust {
     const NAME: &'static str = "rust";
@@ -66,8 +70,10 @@ impl Language for Rust {
     const HAS_HEADER: bool = false;
     const HAS_GENERICS: bool = true;
     const IS_BDD: bool = false;
+    const EXTENTIONS: Vec<&'static str> = vec!["rs"];
 }
 
+#[derive(Debug, Clone)]
 pub struct C;
 impl Language for C {
     const NAME: &'static str = "c";
@@ -76,8 +82,10 @@ impl Language for C {
     const HAS_HEADER: bool = true;
     const HAS_GENERICS: bool = false;
     const IS_BDD: bool = false;
+    const EXTENTIONS: Vec<&'static str> = vec!["c", "h"];
 }
 
+#[derive(Debug, Clone)]
 pub struct Java;
 impl Language for Java {
     const NAME: &'static str = "java";
@@ -86,8 +94,10 @@ impl Language for Java {
     const HAS_HEADER: bool = false;
     const HAS_GENERICS: bool = true;
     const IS_BDD: bool = false;
+    const EXTENTIONS: Vec<&'static str> = vec!["java"];
 }
 
+#[derive(Debug, Clone)]
 pub enum Languages {
     Cpp(Cpp),
     Rust(Rust),

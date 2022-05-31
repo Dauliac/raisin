@@ -8,8 +8,8 @@ use uuid::Uuid;
 #[derive(Debug, Clone)]
 pub struct Cfg {
     uuid: Uuid,
-    blocks: HashMap<String, Box<Block>>,
-    scopes: HashMap<String, Box<Scope>>,
+    blocks: HashMap<Uuid, Box<Block>>,
+    scopes: HashMap<Uuid, Box<Scope>>,
 }
 
 impl Entity for Cfg {
@@ -31,9 +31,9 @@ impl Cfg {
     }
 
     pub fn add_block(&mut self, block: Block) -> Option<Box<Block>> {
-        let id = block.get_uuid().to_string();
+        let uuid = block.get_uuid();
         let block = Box::new(block);
-        self.blocks.insert(id, block)
+        self.blocks.insert(uuid, block)
     }
 
     // pub fn get_successor(&self, successor: &Uuid) -> Option<&Box<Self>> {
