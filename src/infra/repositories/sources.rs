@@ -1,18 +1,19 @@
 use std::rc::Rc;
 use uuid::Uuid;
 
-use crate::app::cqrs::commands::file::SourcesCommand;
-use crate::app::cqrs::queries::file::SourcesQueries;
-use crate::app::cqrs::CommandHandler;
+use crate::app::cqrs::queries::sources::RightSourcesQueries;
+use crate::app::cqrs::queries::sources::SourcesCommands;
+use crate::app::cqrs::queries::sources::SourcesOk;
+use crate::app::cqrs::queries::sources::SourcesQueries;
+use crate::app::cqrs::queries::sources::SourcesResult;
+use crate::app::cqrs::Query;
 use crate::core::domain::Entity;
 use crate::domain::repository::Repository;
 use crate::domain::sources::sources::Sources;
-use crate::infra::services::sources::source_reader::Error;
 use crate::infra::services::sources::source_reader::SourceReader;
 
 pub struct Config {
     pub service: Rc<SourceReader>,
-    pub command_handler: Box<dyn CommandHandler>,
     pub path: String,
 }
 
@@ -39,29 +40,27 @@ impl SourcesRepository {
             config,
         }
     }
+    // fn left_right(&self, query: &SourcesQueries) -> SourcesResult {
+    //     Ok(SourcesOk::DiscoverSources()
+    // }
+    fn right_write(&self, query: &RightSourcesQueries) -> SourcesResult {
+        match query {
+            RightSourcesQueries::DiscoverFiles(query) => {
+                query.service = Some(self.config.service);
+                query.to_owned().run()
+            }
+        }
+    }
 }
 
-impl Repository<SourcesCommand, SourcesQueries, Error> for SourcesRepository {
-    fn write(&mut self, command: SourcesCommand) -> Result<(), Error> {
-        let command = match command {
-            SourcesCommand::DiscoverFiles(mut command) => {
-                command.service = Some(self.config.service.to_owned());
-                command
-            }
+impl Repository<SourcesCommands, SourcesQueries, SourcesResult> for SourcesRepository {
+    fn read(&mut self, query: SourcesQueries) -> SourcesResult {
+        let result = match query {
+            SourcesQueries::Right(query) => self.right_write(&query),
+            SourcesQueries::Left() => Ok(SourcesOk::Nothing),
         };
-        let command = Box::new(command);
-
-        // Execute command
-        self.config.command_handler.handle(command);
-
-        // let paths = command.result?;
-        // for path in paths.iter() {
-        //     self.aggregate.index_sources(path);
-        // }
-        return Ok(());
+        return result;
     }
 
-    fn read(&mut self, query: SourcesQueries) -> Result<(), Error> {
-        return Ok(());
-    }
+    fn write(&mut self, query: SourcesCommands) {}
 }

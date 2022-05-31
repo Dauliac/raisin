@@ -8,11 +8,32 @@ use crate::core::domain::Entity;
 use crate::infra::services::sources::source_reader::{Error as InfraSourcesError, SourceReader};
 
 // Right side Query
+#[derive(Error, Debug)]
+pub enum DiscoverSourcesError {
+    #[error("Infrastructure error")]
+    Infra(InfraSourcesError),
+}
+
+#[derive(Error, Debug)]
+pub enum SourcesError {
+    #[error("Failed to discover sources")]
+    DiscoverSources(DiscoverSourcesError),
+}
+
+#[derive(Debug)]
+pub enum SourcesOk {
+    DiscoverSources(SourcesDTO),
+    // TODO remove nothing
+    Nothing,
+}
+
+pub type SourcesResult = Result<SourcesOk, SourcesError>;
+
 pub struct DiscoverSources {
     uuid: Uuid,
     path: String,
     pub service: Option<Rc<SourceReader>>,
-    result: Option<Result<SourcesDTO, DiscoverSourcesError>>,
+    result: Option<Result<SourcesOk, DiscoverSourcesError>>,
 }
 
 impl Entity for DiscoverSources {
@@ -38,37 +59,36 @@ impl DiscoverSources {
     }
 }
 
-#[derive(Error, Debug)]
-pub enum DiscoverSourcesError {
-    #[error("Infrastructure error")]
-    Infra(InfraSourcesError),
-}
-
-impl Query for DiscoverSources {
-    fn run(&mut self) -> Result<SourcesDTO, DiscoverSourcesError> {
-        let res = match self.service.unwrap().run() {
-            Ok(result) => Ok(result),
-            Err(err) => DiscoverSourcesError::Infra(err),
-        };
-        self.result = Some(res);
-
-        self.result.unwrap()
+impl Query<SourcesResult> for DiscoverSources {
+    fn run(&mut self) -> SourcesResult {
+        match self.service.unwrap().run() {
+            Ok(result) => Ok(SourcesOk::DiscoverSources(result)),
+            Err(err) => Err(SourcesError::DiscoverSources(DiscoverSourcesError::Infra(
+                err,
+            ))),
+        }
     }
 }
 
-pub enum RightSourcesCommands {
+pub enum RightSourcesQueries {
     DiscoverFiles(DiscoverSources),
 }
 
-// pub enum SourcesQueries {
-//     ReadSources(ReadSources),
-// }
+pub enum SourcesQueries {
+    Right(RightSourcesQueries),
+    Left(),
+}
+
+pub enum SourcesCommands {
+    Left(),
+    Right(),
+}
 
 pub struct SourcesQueryFactory {}
 impl SourcesQueryFactory {
-    pub fn discover_files(path: String) -> RightSourcesCommands {
+    pub fn discover_files(path: String) -> SourcesQueries {
         let query = DiscoverSources::new(path);
-        RightSourcesCommands::DiscoverFiles(query)
+        SourcesQueries::Right(RightSourcesQueries::DiscoverFiles(query))
     }
 }
 

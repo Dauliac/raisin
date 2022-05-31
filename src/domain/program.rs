@@ -3,6 +3,7 @@ use crate::domain::cfg::cfg::Cfg;
 use crate::domain::sources::file::File;
 use std::boxed::Box;
 use std::collections::HashMap;
+use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -46,7 +47,7 @@ pub trait Language {
     const HAS_HEADER: bool;
     const HAS_GENERICS: bool;
     const IS_BDD: bool;
-    const EXTENTIONS: Vec<&'static str>;
+    fn get_extentions(&self) -> Vec<&str>;
 }
 
 #[derive(Debug, Clone)]
@@ -58,7 +59,9 @@ impl Language for Cpp {
     const HAS_HEADER: bool = true;
     const HAS_GENERICS: bool = true;
     const IS_BDD: bool = false;
-    const EXTENTIONS: Vec<&'static str> = vec!["hpp", "cpp", "h", "c++"];
+    fn get_extentions(&self) -> Vec<&str> {
+        vec!["hpp", "cpp", "h", "c++"]
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -70,7 +73,9 @@ impl Language for Rust {
     const HAS_HEADER: bool = false;
     const HAS_GENERICS: bool = true;
     const IS_BDD: bool = false;
-    const EXTENTIONS: Vec<&'static str> = vec!["rs"];
+    fn get_extentions(&self) -> Vec<&str> {
+        vec!["rs"]
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -82,7 +87,9 @@ impl Language for C {
     const HAS_HEADER: bool = true;
     const HAS_GENERICS: bool = false;
     const IS_BDD: bool = false;
-    const EXTENTIONS: Vec<&'static str> = vec!["c", "h"];
+    fn get_extentions(&self) -> Vec<&str> {
+        vec!["c", "h"]
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -94,7 +101,9 @@ impl Language for Java {
     const HAS_HEADER: bool = false;
     const HAS_GENERICS: bool = true;
     const IS_BDD: bool = false;
-    const EXTENTIONS: Vec<&'static str> = vec!["java"];
+    fn get_extentions(&self) -> Vec<&str> {
+        vec!["java"]
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -103,4 +112,18 @@ pub enum Languages {
     Rust(Rust),
     C(C),
     Java(Java),
+}
+
+pub struct AvailableLanguages {}
+impl AvailableLanguages {
+    pub fn rust() -> Arc<Languages> {
+        let lang = Rust {};
+
+        Arc::new(Languages::Rust(lang))
+    }
+
+    pub fn cpp() -> Arc<Languages> {
+        let lang = Cpp {};
+        Arc::new(Languages::Cpp(lang))
+    }
 }

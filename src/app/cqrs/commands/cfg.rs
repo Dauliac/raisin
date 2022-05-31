@@ -3,8 +3,8 @@ use std::rc::Rc;
 use uuid::Uuid;
 
 use crate::app::cqrs::Command;
+use crate::app::dtos::cfg::Cfg as CfgDTO;
 use crate::app::dtos::sources::File as FileDTO;
-use crate::app::dtos::Cfg as CfgDTO;
 use crate::app::dtos::Uuid as UuidDTO;
 use crate::core::domain::Entity;
 use crate::infra::services::parsers::Error;

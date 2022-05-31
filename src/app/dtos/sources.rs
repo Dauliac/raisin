@@ -1,6 +1,6 @@
 use super::Uuid;
 use crate::domain::program::Languages;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 pub type Path = String;
 
@@ -8,7 +8,7 @@ pub type Path = String;
 pub struct File {
     pub uuid: Uuid,
     pub path: Path,
-    pub language: Languages,
+    pub language: Arc<Languages>,
     pub lines: HashMap<u64, String>,
     pub includes: Vec<Uuid>,
 }
