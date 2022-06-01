@@ -1,15 +1,9 @@
-use std::collections::HashMap;
 use thiserror::Error;
-use uuid::Uuid;
 
-use crate::app::dtos::cfg::Scope as ScopeDTO;
+use crate::app::dtos::cfg::ScopeDTO;
 
 pub fn init() -> Result<ScopeDTO, Error> {
-    let scope = ScopeDTO {
-        uuid: Uuid::new_v4(),
-        parent: None,
-        childs: HashMap::new(),
-    };
+    let scope = ScopeDTO::new(None, None);
     return Ok(scope);
 }
 

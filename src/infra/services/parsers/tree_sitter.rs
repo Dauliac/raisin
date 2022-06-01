@@ -3,9 +3,10 @@ use std::fs::File;
 use tree_sitter::Language as TsLanguage;
 use tree_sitter::Parser as TsParser;
 
-use crate::app::dtos::cfg::Cfg as CfgDTO;
-use crate::app::dtos::sources::File as FileDTO;
-use crate::app::dtos::Uuid as UuidDTO;
+use crate::app::dtos::cfg::CfgDTO;
+use crate::app::dtos::sources::FileDTO;
+use crate::app::dtos::UuidDTO;
+use crate::domain::program::Language;
 use crate::domain::program::Languages;
 
 use super::Error;
@@ -22,13 +23,13 @@ impl TreeSitterParserService {
         Self {}
     }
 
-    fn detect_language(&self, language: &Languages) -> TsLanguage {
+    fn detect_language(&self, language: &Language) -> TsLanguage {
         match language {
             // TODO(dauliac): fix parsers with other tree_sitter parsers
-            Languages::Cpp(_) => unsafe { tree_sitter_rust() },
-            Languages::Rust(_) => unsafe { tree_sitter_rust() },
-            Languages::C(_) => unsafe { tree_sitter_rust() },
-            Languages::Java(_) => unsafe { tree_sitter_rust() },
+            Language::Cpp(_) => unsafe { tree_sitter_rust() },
+            Language::Rust(_) => unsafe { tree_sitter_rust() },
+            Language::C(_) => unsafe { tree_sitter_rust() },
+            Language::Java(_) => unsafe { tree_sitter_rust() },
         }
     }
     fn iter_on_nodes() {}
@@ -47,6 +48,7 @@ impl Parser for TreeSitterParserService {
         let debug = File::open("debug.log").unwrap();
         // #[cfg(any(unix, target_os = "linux"))]
         parser.print_dot_graphs(&debug);
+        parser.stop_printing_dot_graphs();
 
         Ok(cfgs)
     }

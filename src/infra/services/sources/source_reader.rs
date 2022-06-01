@@ -1,19 +1,19 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::path::Path;
-use std::sync::Arc;
 use thiserror::Error;
 use uuid::Uuid;
 use walkdir::WalkDir;
 
-use crate::app::dtos::sources::File as FileDTO;
-use crate::app::dtos::sources::Path as PathDTO;
-use crate::app::dtos::sources::Sources as SourcesDTO;
-use crate::app::dtos::Uuid as UuidDTO;
-use crate::domain::program::Languages;
+use crate::app::dtos::sources::FileDTO;
+use crate::app::dtos::sources::PathDTO;
+use crate::app::dtos::sources::SourcesDTO;
+use crate::app::dtos::UuidDTO;
+use crate::domain::program::Language;
 
 pub struct Config {
     pub path: String,
-    pub language: Arc<Languages>,
+    pub language: Language,
 }
 
 pub struct SourceReader {
@@ -44,7 +44,7 @@ impl SourceReader {
                 language: self.config.language.clone(),
                 path,
                 lines: HashMap::new(),
-                includes: Vec::new(),
+                includes: HashSet::new(),
             };
 
             if metadata.is_err() {
@@ -69,10 +69,10 @@ impl SourceReader {
             });
         }
 
-        let indexed_files = HashMap::new();
         let sources = SourcesDTO {
             uuid: Uuid::new_v4().to_string(),
-            files: indexed_files,
+            files,
+            language: self.config.language.clone(),
         };
         return Ok(sources.to_owned());
     }

@@ -3,9 +3,9 @@ use thiserror::Error;
 
 use self::tree_sitter::TreeSitterParserService;
 
-use crate::app::dtos::cfg::Cfg as CfgDTO;
-use crate::app::dtos::sources::File as FileDTO;
-use crate::app::dtos::Uuid as UuidDTO;
+use crate::app::dtos::cfg::CfgDTO;
+use crate::app::dtos::sources::FileDTO;
+use crate::app::dtos::UuidDTO;
 
 pub mod scope;
 pub mod tree_sitter;

@@ -3,7 +3,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use crate::app::cqrs::Query;
-use crate::app::dtos::sources::Sources as SourcesDTO;
+use crate::app::dtos::sources::SourcesDTO;
 use crate::core::domain::Entity;
 use crate::infra::services::sources::source_reader::{Error as InfraSourcesError, SourceReader};
 
@@ -54,14 +54,15 @@ impl DiscoverSources {
             result: None,
         }
     }
-    pub fn get_path(&self) -> String {
-        self.path
-    }
+
+    // pub fn get_path(&self) -> String {
+    //     self.path.clone()
+    // }
 }
 
 impl Query<SourcesResult> for DiscoverSources {
     fn run(&mut self) -> SourcesResult {
-        match self.service.unwrap().run() {
+        match self.service.clone().unwrap().run() {
             Ok(result) => Ok(SourcesOk::DiscoverSources(result)),
             Err(err) => Err(SourcesError::DiscoverSources(DiscoverSourcesError::Infra(
                 err,

@@ -1,7 +1,11 @@
 // use super::code::Code;
-use crate::core::domain::Entity;
-
-use std::{collections::HashMap, path::PathBuf};
+use crate::{core::domain::Entity, domain::program::Language};
+use std::collections::hash_map::Iter as HashMapIter;
+use std::collections::hash_set::Iter as HashSetIter;
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+};
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -9,7 +13,8 @@ pub struct File {
     uuid: Uuid,
     pub path: PathBuf,
     lines: HashMap<u64, String>,
-    pub includes: Vec<Uuid>,
+    language: Language,
+    includes: HashSet<Uuid>,
 }
 
 impl Entity for File {
@@ -22,12 +27,16 @@ impl Entity for File {
 }
 
 impl File {
-    pub fn new(path: PathBuf) -> File {
+    pub fn new(uuid: Option<Uuid>, path: PathBuf, language: Language) -> File {
         Self {
-            uuid: Uuid::new_v4(),
+            uuid: match uuid {
+                Some(uuid) => uuid,
+                None => Uuid::new_v4(),
+            },
             path,
+            language,
             lines: HashMap::new(),
-            includes: Vec::new(),
+            includes: HashSet::new(),
         }
     }
 
@@ -35,8 +44,24 @@ impl File {
         self.path.to_owned()
     }
 
-    pub fn get_lines(&self) -> std::collections::hash_map::Iter<'_, u64, String> {
+    pub fn insert_line(&mut self, line_number: u64, line: String) -> Option<String> {
+        self.lines.insert(line_number, line)
+    }
+
+    pub fn get_lines(&self) -> HashMapIter<u64, String> {
         self.lines.iter()
+    }
+
+    pub fn include(&mut self, uuid: Uuid) -> bool {
+        self.includes.insert(uuid)
+    }
+
+    pub fn get_includes(&self) -> HashSetIter<Uuid> {
+        self.includes.iter()
+    }
+
+    pub fn get_language(&self) -> Language {
+        self.language.clone()
     }
     // pub fn insert_content(&mut self, code: Code) {
     //     self.lines.insert(code.coordinate.start_line, code);

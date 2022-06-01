@@ -3,14 +3,13 @@ use crate::domain::cfg::cfg::Cfg;
 use crate::domain::sources::file::File;
 use std::boxed::Box;
 use std::collections::HashMap;
-use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct Program {
     uuid: Uuid,
-    cfgs: HashMap<String, Cfg>,
-    sources: HashMap<String, File>,
+    cfgs: HashMap<Uuid, Cfg>,
+    sources: HashMap<Uuid, File>,
 }
 
 impl Entity for Program {
@@ -40,7 +39,7 @@ enum Paradigms {
     Bdd,
 }
 
-pub trait Language {
+pub trait Languages {
     const NAME: &'static str;
     const IS_OBJECT_ORIENTED: bool;
     const IS_FUNCTIONAL_ORIENTED: bool;
@@ -52,7 +51,7 @@ pub trait Language {
 
 #[derive(Debug, Clone)]
 pub struct Cpp {}
-impl Language for Cpp {
+impl Languages for Cpp {
     const NAME: &'static str = "c++";
     const IS_OBJECT_ORIENTED: bool = true;
     const IS_FUNCTIONAL_ORIENTED: bool = true;
@@ -66,7 +65,7 @@ impl Language for Cpp {
 
 #[derive(Debug, Clone)]
 pub struct Rust;
-impl Language for Rust {
+impl Languages for Rust {
     const NAME: &'static str = "rust";
     const IS_OBJECT_ORIENTED: bool = true;
     const IS_FUNCTIONAL_ORIENTED: bool = true;
@@ -80,7 +79,7 @@ impl Language for Rust {
 
 #[derive(Debug, Clone)]
 pub struct C;
-impl Language for C {
+impl Languages for C {
     const NAME: &'static str = "c";
     const IS_OBJECT_ORIENTED: bool = false;
     const IS_FUNCTIONAL_ORIENTED: bool = true;
@@ -94,7 +93,7 @@ impl Language for C {
 
 #[derive(Debug, Clone)]
 pub struct Java;
-impl Language for Java {
+impl Languages for Java {
     const NAME: &'static str = "java";
     const IS_OBJECT_ORIENTED: bool = true;
     const IS_FUNCTIONAL_ORIENTED: bool = true; // Question
@@ -107,7 +106,7 @@ impl Language for Java {
 }
 
 #[derive(Debug, Clone)]
-pub enum Languages {
+pub enum Language {
     Cpp(Cpp),
     Rust(Rust),
     C(C),
@@ -116,14 +115,14 @@ pub enum Languages {
 
 pub struct AvailableLanguages {}
 impl AvailableLanguages {
-    pub fn rust() -> Arc<Languages> {
+    pub fn rust() -> Language {
         let lang = Rust {};
 
-        Arc::new(Languages::Rust(lang))
+        Language::Rust(lang)
     }
 
-    pub fn cpp() -> Arc<Languages> {
+    pub fn cpp() -> Language {
         let lang = Cpp {};
-        Arc::new(Languages::Cpp(lang))
+        Language::Cpp(lang)
     }
 }

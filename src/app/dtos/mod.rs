@@ -1,4 +1,4 @@
-pub type Uuid = String;
+pub type UuidDTO = String;
 
 pub mod cfg;
 pub mod sources;

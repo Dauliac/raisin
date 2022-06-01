@@ -4,9 +4,9 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use crate::app::cqrs::Query;
-use crate::app::dtos::cfg::Cfg as CfgDTO;
-use crate::app::dtos::sources::File as FileDTO;
-use crate::app::dtos::Uuid as UuidDTO;
+use crate::app::dtos::cfg::CfgDTO;
+use crate::app::dtos::sources::FileDTO;
+use crate::app::dtos::UuidDTO;
 use crate::core::domain::Entity;
 use crate::infra::services::parsers::Error as InfraParserError;
 use crate::infra::services::parsers::Parser;
@@ -62,13 +62,13 @@ impl ParseFile {
 
 impl Query<CfgResult> for ParseFile {
     fn run(&mut self) -> CfgResult {
-        match self.service.unwrap().run(&self.file) {
+        // Obligation to clone service here :/
+        let result = match self.service.clone().unwrap().run(&self.file) {
             Ok(result) => Ok(CfgOk::ParseFile(result)),
             Err(err) => Err(CfgError::ParseFile(ParseFileError::Infra(err))),
-        }
-        // self.result = Some(res);
+        };
 
-        // self.result.unwrap()
+        return result;
     }
 }
 

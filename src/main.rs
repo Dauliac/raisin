@@ -17,8 +17,9 @@ use infra::{
 
 fn main() {
     let _program = domain::program::Program::new();
+    let language = AvailableLanguages::rust();
     let config = Config {
-        language: AvailableLanguages::rust(),
+        language: language.clone(),
         path: "./src".to_string(),
     };
     let service = Rc::new(SourceReader::new(config));
@@ -26,6 +27,7 @@ fn main() {
     let config = SourcesRepositoryConfig {
         service,
         path: path.clone(),
+        language,
     };
     let mut repo = SourcesRepository::new(config);
     let query = SourcesQueryFactory::discover_files(path);
@@ -37,6 +39,8 @@ fn main() {
         Ok(ok) => ok,
         Err(_) => SourcesOk::Nothing,
     };
+    println!("{:?}", result);
+
     let result = match result {
         SourcesOk::DiscoverSources(sources) => {
             for (uuid, file) in sources.files.iter() {
