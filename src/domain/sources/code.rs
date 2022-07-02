@@ -1,5 +1,4 @@
-use super::file::File;
-use crate::core::domain::Value;
+use crate::core::domain::{Uuid, Value};
 
 use std::any::Any;
 
@@ -11,10 +10,10 @@ pub struct Coordinate {
     pub end_char: u64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Code {
     pub coordinate: Coordinate,
-    pub file: File,
+    pub file_uuid: Uuid,
 }
 
 impl Value for Code {
@@ -32,7 +31,10 @@ impl Value for Code {
     }
 }
 impl Code {
-    pub fn new(coordinate: Coordinate, file: File) -> Code {
-        Code { coordinate, file }
+    pub fn new(coordinate: Coordinate, file_uuid: Uuid) -> Code {
+        Code {
+            coordinate,
+            file_uuid,
+        }
     }
 }

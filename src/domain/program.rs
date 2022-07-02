@@ -1,20 +1,19 @@
-use crate::core::domain::Entity;
-use crate::domain::cfg::cfg::Cfg;
+use crate::core::domain::{Entity, Uuid};
+use crate::domain::cfg::aggregate::Cfg;
 use crate::domain::sources::file::File;
+use serde::{Deserialize, Serialize};
 use std::boxed::Box;
 use std::collections::HashMap;
-use uuid::Uuid;
 
-#[derive(Debug, Clone)]
 pub struct Program {
     uuid: Uuid,
     cfgs: HashMap<Uuid, Cfg>,
-    sources: HashMap<Uuid, File>,
+    sources: HashMap<String, File>,
 }
 
 impl Entity for Program {
     fn get_uuid(&self) -> Uuid {
-        self.uuid
+        self.uuid.clone()
     }
     fn equals(&self, entity: Box<dyn Entity>) -> bool {
         self.uuid == entity.get_uuid()
@@ -22,13 +21,13 @@ impl Entity for Program {
 }
 
 impl Program {
-    pub fn new() -> Self {
-        Self {
-            uuid: Uuid::new_v4(),
-            cfgs: HashMap::new(),
-            sources: HashMap::new(),
-        }
-    }
+    // pub fn new() -> Self {
+    //     Self {
+    //         uuid: Uuid::new_v4(),
+    //         cfgs: HashMap::new(),
+    //         sources: HashMap::new(),
+    //     }
+    // }
 }
 
 enum Paradigms {
@@ -49,7 +48,7 @@ pub trait Languages {
     fn get_extentions(&self) -> Vec<&str>;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Cpp {}
 impl Languages for Cpp {
     const NAME: &'static str = "c++";
@@ -63,7 +62,7 @@ impl Languages for Cpp {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Rust;
 impl Languages for Rust {
     const NAME: &'static str = "rust";
@@ -77,7 +76,7 @@ impl Languages for Rust {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct C;
 impl Languages for C {
     const NAME: &'static str = "c";
@@ -91,7 +90,7 @@ impl Languages for C {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Java;
 impl Languages for Java {
     const NAME: &'static str = "java";
@@ -105,7 +104,7 @@ impl Languages for Java {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq, Hash)]
 pub enum Language {
     Cpp(Cpp),
     Rust(Rust),

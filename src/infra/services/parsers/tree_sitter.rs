@@ -1,13 +1,12 @@
-use std::collections::HashMap;
-use std::fs::File;
+use std::fs::File as FsFile;
 use tree_sitter::Language as TsLanguage;
 use tree_sitter::Parser as TsParser;
 
-use crate::app::dtos::cfg::CfgDTO;
-use crate::app::dtos::sources::FileDTO;
-use crate::app::dtos::UuidDTO;
+use crate::domain::cfg::aggregate::Cfg;
 use crate::domain::program::Language;
-use crate::domain::program::Languages;
+// use crate::domain::program::Languages;
+use crate::domain::sources::aggregate::Sources;
+// use crate::domain::sources::file::File;
 
 use super::Error;
 use super::Parser;
@@ -36,16 +35,16 @@ impl TreeSitterParserService {
 }
 
 impl Parser for TreeSitterParserService {
-    fn run(&self, file: &FileDTO) -> Result<HashMap<UuidDTO, CfgDTO>, Error> {
-        let cfgs: HashMap<UuidDTO, CfgDTO> = HashMap::new();
-        let language = self.detect_language(&file.language);
+    fn run(&self, file: &Sources) -> Result<Vec<Cfg>, Error> {
+        let cfgs = Vec::new();
+        let language = self.detect_language(&file.get_language());
         let mut parser = TsParser::new();
         // TODO check if bad language is an error ?
         // maybe yes ?
         parser.set_language(language).unwrap();
 
         // TODO remove this debug block
-        let debug = File::open("debug.log").unwrap();
+        let debug = FsFile::open("debug.log").unwrap();
         // #[cfg(any(unix, target_os = "linux"))]
         parser.print_dot_graphs(&debug);
         parser.stop_printing_dot_graphs();

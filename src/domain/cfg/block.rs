@@ -1,17 +1,18 @@
-use crate::core::domain::Entity;
-use std::collections::HashMap;
-use uuid::Uuid;
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
-#[derive(Debug, Clone)]
+use crate::core::domain::{Entity, Uuid};
+
+#[derive(Serialize, Deserialize)]
 pub struct Block {
     uuid: Uuid,
-    precedents: HashMap<String, Box<Block>>,
-    successors: HashMap<String, Box<Block>>,
+    precedents: HashSet<String>,
+    successors: HashSet<String>,
 }
 
 impl Entity for Block {
     fn get_uuid(&self) -> Uuid {
-        self.uuid
+        self.uuid.clone()
     }
 
     fn equals(&self, entity: Box<dyn Entity>) -> bool {
@@ -23,26 +24,24 @@ impl Block {
     pub fn new() -> Self {
         Self {
             uuid: Uuid::new_v4(),
-            precedents: HashMap::new(),
-            successors: HashMap::new(),
+            precedents: HashSet::new(),
+            successors: HashSet::new(),
         }
     }
 
-    pub fn add_precedent(&mut self, precedent: Box<Self>) -> Option<Box<Self>> {
-        self.precedents
-            .insert(precedent.uuid.to_string(), precedent)
+    pub fn add_precedent(&mut self, precedent_uuid: String) -> bool {
+        self.precedents.insert(precedent_uuid)
     }
 
-    pub fn get_precedent(&self, precedent: &Uuid) -> Option<&Box<Self>> {
-        self.precedents.get(&precedent.to_string())
+    pub fn get_precedent(&self, precedent_uuid: &String) -> Option<&String> {
+        self.precedents.get(precedent_uuid)
     }
 
-    pub fn add_successor(&mut self, successor: Box<Self>) -> Option<Box<Self>> {
-        self.successors
-            .insert(successor.uuid.to_string(), successor)
+    pub fn add_successor(&mut self, successor_uuid: String) -> bool {
+        self.successors.insert(successor_uuid)
     }
 
-    pub fn get_successor(&self, successor: &Uuid) -> Option<&Box<Self>> {
-        self.successors.get(&successor.to_string())
+    pub fn get_successor(&self, successor_uuid: &String) -> Option<&String> {
+        self.successors.get(successor_uuid)
     }
 }

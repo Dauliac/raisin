@@ -1,12 +1,12 @@
-use crate::core::domain::Entity;
-use std::collections::HashMap;
-use uuid::Uuid;
+use crate::{core::domain::Entity, core::domain::Uuid};
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct Scope {
     uuid: Uuid,
-    parent: Option<Box<Scope>>,
-    childs: HashMap<String, Box<Scope>>,
+    parent: Option<String>,
+    childs: HashSet<String>,
 }
 
 impl Entity for Scope {
@@ -23,19 +23,19 @@ impl Scope {
         Self {
             uuid: Uuid::new_v4(),
             parent: None,
-            childs: HashMap::new(),
+            childs: HashSet::new(),
         }
     }
 
-    pub fn get_parent(&self) -> &Option<Box<Self>> {
+    pub fn get_parent(&self) -> &Option<String> {
         &self.parent
     }
 
-    pub fn set_parent(&mut self, parent: Box<Self>) {
-        self.parent = Some(parent);
+    pub fn set_parent(&mut self, parent_uuid: String) {
+        self.parent = Some(parent_uuid);
     }
 
-    pub fn set_child(&mut self, child: Box<Self>) -> Option<Box<Self>> {
-        self.childs.insert(child.uuid.to_string(), child)
+    pub fn set_child(&mut self, child_uuid: String) -> bool {
+        self.childs.insert(child_uuid)
     }
 }

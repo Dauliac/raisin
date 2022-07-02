@@ -1,0 +1,3 @@
+[submodule "tree-sitter-rust"]
+	path = tree-sitter-rust
+	url = git@github.com:tree-sitter/tree-sitter-rust.git

@@ -1,17 +1,14 @@
-use std::collections::HashMap;
 use thiserror::Error;
 
-use self::tree_sitter::TreeSitterParserService;
+use crate::domain::{cfg::aggregate::Cfg, sources::aggregate::Sources};
 
-use crate::app::dtos::cfg::CfgDTO;
-use crate::app::dtos::sources::FileDTO;
-use crate::app::dtos::UuidDTO;
+use self::tree_sitter::TreeSitterParserService;
 
 pub mod scope;
 pub mod tree_sitter;
 
 pub trait Parser {
-    fn run(&self, file: &FileDTO) -> Result<HashMap<UuidDTO, CfgDTO>, Error>;
+    fn run(&self, sources: &Sources) -> Result<Vec<Cfg>, Error>;
 }
 
 pub struct AvailableParsers {}

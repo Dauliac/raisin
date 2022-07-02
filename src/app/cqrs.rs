@@ -1,15 +1,9 @@
-use std::collections::VecDeque;
-
-use crate::core::domain::Entity;
-
 // TODO: have a timestamp in
 
-pub trait Command: Entity {
+pub trait Command {
     fn run(&mut self);
 }
 
-pub trait Query<R>: Entity {
+pub trait Query<R> {
     fn run(&mut self) -> R;
 }
-
-pub mod queries;
