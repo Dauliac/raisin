@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use thiserror::Error;
 
 use crate::domain::{cfg::aggregate::Cfg, sources::aggregate::Sources};
@@ -8,7 +10,7 @@ pub mod scope;
 pub mod tree_sitter;
 
 pub trait Parser {
-    fn run(&self, sources: &Sources) -> Result<Vec<Cfg>, Error>;
+    fn run(&self, sources: Arc<Sources>) -> Result<Vec<Cfg>, Error>;
 }
 
 pub struct AvailableParsers {}

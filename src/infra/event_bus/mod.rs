@@ -15,7 +15,7 @@ pub enum Event {
 }
 
 #[async_trait]
-pub trait EventBus<Event, Listener> {
+pub trait EventBus {
     fn subscribe(&mut self, event: Event, priority: u8, listeners: Listener);
     async fn publish(&self, event: Event);
 }
@@ -35,7 +35,7 @@ impl MemoryEventBus {
 }
 
 #[async_trait]
-impl EventBus<Event, Listener> for MemoryEventBus {
+impl EventBus for MemoryEventBus {
     fn subscribe(&mut self, event: Event, priority: u8, listener: Listener) {
         let event = Arc::new(event);
         self.queue.push(event.clone(), priority);

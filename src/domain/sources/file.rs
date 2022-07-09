@@ -50,6 +50,18 @@ impl File {
         self.lines.iter()
     }
 
+    pub fn get_text(&self) -> String {
+        let mut text = "".to_owned();
+
+        for line in self.get_lines() {
+            let line = line.1.clone();
+            // let line = line.1.clone();
+            text += line.as_str();
+        }
+
+        text
+    }
+
     pub fn include(&mut self, uuid: String) {
         self.includes.insert(uuid);
     }

@@ -1,6 +1,6 @@
 use thiserror::Error;
 use serde::{Deserialize, Serialize};
-use std::collections::{hash_map::Iter, HashMap};
+use std::collections::{hash_map::{IterMut, Iter}, HashMap};
 use std::hash::Hash;
 
 use super::file::File;
@@ -25,7 +25,10 @@ pub enum SourcesEvent {
         path: String,
     },
     FileNotIndexed {
-    }
+    },
+    FileContentLoaded {
+        file_uuid: Uuid,
+    },
 }
 
 impl Event for SourcesEvent {
@@ -85,6 +88,10 @@ impl Sources {
 
     pub fn get_files(&self) -> Iter<Uuid, File> {
         self.files.iter()
+    }
+
+    pub fn edit_files(&mut self) -> IterMut<Uuid, File> {
+        self.files.iter_mut()
     }
 
     pub fn get_language(&self) -> Language {

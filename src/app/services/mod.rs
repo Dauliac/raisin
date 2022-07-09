@@ -1,5 +1,10 @@
-// pub mod load_project_service;
+use async_trait::async_trait;
 
+
+#[async_trait]
 pub trait Service<R> {
-    fn run() -> R;
+    async fn run(&mut self) -> R;
 }
+
+pub mod load_project_service;
+pub mod parse_project_service;

@@ -1,20 +1,13 @@
-use crate::app::cqrs::commands::file::SourcesCommand;
-use crate::app::cqrs::queries::file::SourcesQueries;
-use crate::app::cqrs::CommandHandler;
-use crate::core::domain::{Entity, Uuid};
-use crate::domain::repository::Repository;
-use crate::domain::sources::sources::Sources;
-use crate::infra::services::sources::source_reader::Error;
-use crate::infra::services::sources::source_reader::SourceReader;
+use std::collections::HashMap;
+use std::sync::Arc;
 
-pub struct Config {
-    pub path: String,
-}
+use crate::core::domain::{Entity, Uuid};
+use crate::domain::cfg::aggregate::Cfg;
+use crate::domain::repository::Repository;
 
 pub struct CfgRepository {
     uuid: Uuid,
-    aggregates: HashMap<Uuid, Cfg>,
-    config: Config,
+    aggregates: HashMap<Uuid, Arc<Cfg>>,
 }
 
 impl Entity for CfgRepository {
@@ -27,21 +20,23 @@ impl Entity for CfgRepository {
 }
 
 impl CfgRepository {
-    pub fn new(config: Config) -> Self {
+    pub fn new() -> Self {
         Self {
             uuid: Uuid::new_v4(),
-            aggregate: HashMap::new(),
-            config,
+            aggregates: HashMap::new(),
         }
     }
 }
 
 impl Repository<Cfg> for CfgRepository {
-    fn read(&mut self, uuid: Uuid) -> Option<&Cfg> {
-        return self.aggregates.get(uuid);
+    fn read(&mut self, uuid: Uuid) -> Option<Arc<Cfg>> {
+        match self.aggregates.get(&uuid).as_deref() {
+            Some(cfg) => Some(cfg.clone()),
+            None => None,
+        }
     }
 
-    fn write(&mut self, command: CfgCommand) {
-        return;
+    fn write(&mut self, cfg: Cfg) {
+        self.aggregates.insert(cfg.get_uuid(), Arc::new(cfg));
     }
 }

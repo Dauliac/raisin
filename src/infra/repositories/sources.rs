@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use uuid::Uuid;
 
 use crate::core::domain::Entity;
@@ -6,7 +8,7 @@ use crate::domain::sources::aggregate::Sources;
 
 pub struct SourcesRepository {
     uuid: Uuid,
-    aggregate: Option<Box<Sources>>,
+    aggregate: Option<Arc<Sources>>,
 }
 
 impl Entity for SourcesRepository {
@@ -28,14 +30,15 @@ impl SourcesRepository {
 }
 
 impl Repository<Sources> for SourcesRepository {
-    fn read(&mut self, uuid: Uuid) -> Option<&Sources> {
-        if self.aggregate.is_some() && uuid == self.aggregate.as_ref().unwrap().get_uuid() {
-            return Some(&self.aggregate.as_ref().unwrap());
+    fn read(&mut self, uuid: Uuid) -> Option<Arc<Sources>> {
+        let sources = self.aggregate.clone();
+        if sources.is_some() && uuid == sources.clone().unwrap().get_uuid() {
+            return Some(sources.unwrap());
         }
         return None;
     }
 
     fn write(&mut self, sources: Sources) {
-        self.aggregate = Some(Box::new(sources));
+        self.aggregate = Some(Arc::new(sources));
     }
 }
