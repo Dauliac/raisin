@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use super::block::Block;
 use super::scope::Scope;
-use crate::core::domain::{new_uuid, Aggregate, Entity, Uuid};
+use crate::{core::domain::{new_uuid, Aggregate, Entity, Uuid}, domain::sources::code::Code};
 
 #[derive(Error, Debug)]
 pub enum CfgError {
@@ -21,7 +21,7 @@ pub enum CfgEvent {
 #[derive(Serialize, Deserialize)]
 pub struct Cfg {
     uuid: Uuid,
-    file: Uuid,
+    code: Code,
     blocks: HashMap<Uuid, Box<Block>>,
     scopes: HashMap<Uuid, Box<Scope>>,
 }
@@ -43,20 +43,20 @@ impl Aggregate for Cfg {
 
 impl Cfg {
 
-    pub fn new(uuid: Option<Uuid>, file_uuid: Uuid) -> Self {
+    pub fn new(uuid: Option<Uuid>, code: Code) -> Self {
         Self {
             uuid: match uuid {
                 Some(uuid) => uuid,
                 None => new_uuid(),
             },
-            file: file_uuid,
+            code,
             blocks: HashMap::new(),
             scopes: HashMap::new(),
         }
     }
 
-    pub fn discovered(file_uuid: Uuid) -> (Self, <Self as Aggregate>::Result) {
-        (Self::new(None, file_uuid), Ok(vec![CfgEvent::CfgDiscovered]))
+    pub fn discover(code: Code) -> (Self, Vec<<Cfg as Aggregate>::Event>) {
+        (Self::new(None, code), vec![CfgEvent::CfgDiscovered])
     }
 
     pub async fn insert_block(&mut self, block: Block) {

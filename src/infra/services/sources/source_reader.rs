@@ -25,7 +25,7 @@ impl SourceReader<'_> {
             let reader = BufReader::new(reader);
             for (index, line) in reader.lines().enumerate() {
                 let line = line.unwrap(); // Ignore errors.
-                let index: u64 = index.try_into().unwrap();
+                let index: usize = index.try_into().unwrap();
                 file.insert_line(index, line);
                 events.push(
                   SourcesEvent::FileContentLoaded {

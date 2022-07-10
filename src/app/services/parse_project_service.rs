@@ -1,12 +1,12 @@
 use std::sync::Arc;
 use async_trait::async_trait;
 
-use crate::{infra::{event_bus::EventBus, services::parsers::AvailableParsers, repositories::cfg::CfgRepository}, domain::{sources::aggregate::Sources, repository::Repository}};
+use crate::{infra::{event_bus::{EventBus, Event}, services::parsers::AvailableParsers, repositories::cfg::CfgRepository}, domain::{sources::aggregate::Sources, repository::Repository}};
 use super::Service;
 
 pub struct Config {
-    sources: Arc<Sources>,
-    event_bus: Arc<dyn EventBus + Send + Sync>,
+    pub sources: Arc<Sources>,
+    pub event_bus: Arc<dyn EventBus + Send + Sync>,
 }
 
 pub struct ParseProjectService {
@@ -28,7 +28,11 @@ impl Service<CfgRepository> for ParseProjectService {
         let parse = AvailableParsers::tree_sitter();
         let sources = self.config.sources.clone();
         match parse.run(sources) {
-            Ok(cfgs) => {
+            Ok((cfgs, events)) => {
+                for event in events {
+                    let event = Event::Cfg(event);
+                    self.config.event_bus.publish(event);
+                }
                 for cfg in cfgs {
                     repo.write(cfg);
                 }

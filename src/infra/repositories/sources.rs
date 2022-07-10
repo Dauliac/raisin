@@ -27,6 +27,14 @@ impl SourcesRepository {
             aggregate: None,
         }
     }
+
+    pub fn read(&self) -> Option<Arc<Sources>> {
+        let sources = self.aggregate.clone();
+        if sources.is_some() {
+            return Some(sources.unwrap());
+        }
+        return None;
+    }
 }
 
 impl Repository<Sources> for SourcesRepository {

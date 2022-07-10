@@ -1,16 +1,44 @@
 use crate::core::domain::{Uuid, Value};
+use serde::{Deserialize, Serialize};
 
 use std::any::Any;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Coordinate {
-    pub start_line: u64,
-    pub end_line: u64,
-    pub start_char: u64,
-    pub end_char: u64,
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Point {
+    pub row: usize,
+    pub column: usize,
 }
 
-#[derive(Clone, PartialEq)]
+// TODO: replace equals with PartialEq implem
+impl Value for Point {
+    fn equals(&self, value: &dyn Any) -> bool {
+        let point = match value.downcast_ref::<Point>() {
+            Some(point) => point,
+            None => return false,
+        };
+
+        self == point
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Coordinate {
+    pub start: Point,
+    pub end: Point,
+}
+
+impl Value for Coordinate {
+    fn equals(&self, value: &dyn Any) -> bool {
+        let coordinate = match value.downcast_ref::<Coordinate>() {
+            Some(coordinate) => coordinate,
+            None => return false,
+        };
+
+        self == coordinate
+    }
+}
+
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct Code {
     pub coordinate: Coordinate,
     pub file_uuid: Uuid,
@@ -23,11 +51,7 @@ impl Value for Code {
             None => return false,
         };
 
-        self.coordinate.start_line == code.coordinate.start_line
-            && self.coordinate.end_line == code.coordinate.end_line
-            && self.coordinate.start_char == code.coordinate.start_char
-            && self.coordinate.end_char == code.coordinate.end_char
-            && self.coordinate.end_char == code.coordinate.end_char
+        self == code
     }
 }
 impl Code {

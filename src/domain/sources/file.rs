@@ -2,15 +2,15 @@
 use crate::core::domain::{new_uuid, Entity, Uuid};
 use crate::domain::program::Language;
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Iter as HashMapIter;
+use std::collections::btree_map::Iter as MapIter;
 use std::collections::hash_set::Iter as HashSetIter;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct File {
     uuid: Uuid,
     pub path: String,
-    lines: HashMap<u64, String>,
+    lines: BTreeMap<usize, String>,
     language: Language,
     includes: HashSet<String>,
 }
@@ -33,7 +33,7 @@ impl File {
             },
             path,
             language,
-            lines: HashMap::new(),
+            lines: BTreeMap::new(),
             includes: HashSet::new(),
         }
     }
@@ -42,11 +42,11 @@ impl File {
         self.path.clone()
     }
 
-    pub fn insert_line(&mut self, line_number: u64, line: String) {
+    pub fn insert_line(&mut self, line_number: usize, line: String) {
         self.lines.insert(line_number, line);
     }
 
-    pub fn get_lines(&self) -> HashMapIter<u64, String> {
+    pub fn get_lines(&self) -> MapIter<usize, String> {
         self.lines.iter()
     }
 
@@ -57,6 +57,7 @@ impl File {
             let line = line.1.clone();
             // let line = line.1.clone();
             text += line.as_str();
+            text += "\n";
         }
 
         text
