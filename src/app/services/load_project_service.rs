@@ -44,6 +44,7 @@ impl Service<SourcesRepository> for LoadProjectService {
         };
         let sources_factory = DefaultSourcesFactory::new(config);
         let sources_result = sources_factory.register().await;
+
         if let Ok(result) = sources_result {
             let mut sources = result.0;
             let sources_creation_events = result.1;

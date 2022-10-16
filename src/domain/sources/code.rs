@@ -38,7 +38,7 @@ impl Value for Coordinate {
     }
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug, Hash, Eq)]
 pub struct Code {
     pub coordinate: Coordinate,
     pub file_uuid: Uuid,

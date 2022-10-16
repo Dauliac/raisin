@@ -82,6 +82,9 @@ fn parse(
 
     while reached_root == false {
         if cursor.node().is_named() {
+            let slice = &bytes[cursor.node().range().start_byte..cursor.node().range().end_byte];
+            let content = std::str::from_utf8(slice).unwrap();
+
             if cursor.node().kind() == "function_item" {
                 let (cfg, mut new_events) = parse_cfg(cursor.node(), bytes, file_uuid.clone());
                 cfgs.push(cfg);

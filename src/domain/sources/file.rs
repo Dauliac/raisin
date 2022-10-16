@@ -1,36 +1,42 @@
-// use super::code::Code;
 use crate::core::domain::{new_uuid, Entity, Uuid};
 use crate::domain::program::Language;
 use serde::{Deserialize, Serialize};
 use std::collections::btree_map::Iter as MapIter;
 use std::collections::hash_set::Iter as HashSetIter;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
+use std::path::PathBuf;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
+pub struct FileUuid(Uuid);
+impl FileUuid {
+    pub fn new() -> Self {
+        Self(new_uuid())
+    }
+}
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct File {
-    uuid: Uuid,
-    pub path: String,
+    uuid: FileUuid,
+    pub path: PathBuf,
     lines: BTreeMap<usize, String>,
     language: Language,
-    includes: HashSet<String>,
+    includes: HashSet<FileUuid>,
 }
 
-impl Entity for File {
-    fn get_uuid(&self) -> Uuid {
+impl Entity<Self> for File {
+    type Uuid = FileUuid;
+    fn get_uuid(&self) -> FileUuid {
         self.uuid.clone()
     }
-    fn equals(&self, entity: Box<dyn Entity>) -> bool {
+    fn equals(&self, entity: Box<Self>) -> bool {
         self.uuid == entity.get_uuid()
     }
 }
 
 impl File {
-    pub fn new(uuid: Option<Uuid>, path: String, language: Language) -> File {
+    pub fn new(uuid: FileUuid, path: PathBuf, language: Language) -> File {
         Self {
-            uuid: match uuid {
-                Some(uuid) => uuid,
-                None => new_uuid(),
-            },
+            uuid,
             path,
             language,
             lines: BTreeMap::new(),
@@ -38,7 +44,7 @@ impl File {
         }
     }
 
-    pub fn get_path(&self) -> String {
+    pub fn get_path(&self) -> PathBuf {
         self.path.clone()
     }
 
@@ -63,11 +69,11 @@ impl File {
         text
     }
 
-    pub fn include(&mut self, uuid: String) {
+    pub fn include(&mut self, uuid: FileUuid) {
         self.includes.insert(uuid);
     }
 
-    pub fn get_includes(&self) -> HashSetIter<String> {
+    pub fn get_includes(&self) -> HashSetIter<FileUuid> {
         self.includes.iter()
     }
 

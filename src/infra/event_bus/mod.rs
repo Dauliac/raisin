@@ -3,15 +3,10 @@ use async_trait::async_trait;
 use priority_queue::PriorityQueue;
 use std::sync::Arc;
 
-use crate::domain::{sources::aggregate::SourcesEvent, cfg::aggregate::CfgEvent};
+use crate::{domain::program::Program, core::domain::Aggregate};
 
+type Event = <Program as Aggregate<Program>>::Event;
 pub enum Listener {
-}
-
-#[derive(PartialEq, Eq, Hash)]
-pub enum Event {
-    Sources(SourcesEvent),
-    Cfg(CfgEvent),
 }
 
 #[async_trait]

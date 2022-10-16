@@ -1,41 +1,63 @@
-use crate::core::domain::{Entity, Uuid};
-use crate::domain::cfg::aggregate::Cfg;
-use crate::domain::sources::file::File;
 use serde::{Deserialize, Serialize};
 use std::boxed::Box;
 use std::collections::HashMap;
+use thiserror::Error;
 
-pub struct Program {
-    uuid: Uuid,
-    cfgs: HashMap<Uuid, Cfg>,
-    sources: HashMap<String, File>,
+use super::sources::aggregate::Sources;
+use crate::core::domain::{new_uuid, Aggregate, Entity, Uuid};
+use crate::domain::cfg::aggregate::Cfg;
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
+pub struct ProgramUuid(Uuid);
+impl ProgramUuid {
+    pub fn new() -> Self {
+        Self(new_uuid())
+    }
 }
 
-impl Entity for Program {
-    fn get_uuid(&self) -> Uuid {
+#[derive(Error, Debug)]
+pub enum ProgramError {
+    #[error("Sources error")]
+    Sources(<Sources as Aggregate<Sources>>::Error),
+    #[error("Cfg error")]
+    Cfg(<Cfg as Aggregate<Cfg>>::Error),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
+pub enum ProgramEvent {
+    Sources(<Sources as Aggregate<Sources>>::Event),
+    Cfg(<Cfg as Aggregate<Cfg>>::Event),
+    ProgramDiscovered {
+        program_uuid: ProgramUuid,
+        language: Language,
+    },
+}
+
+pub struct Program {
+    uuid: ProgramUuid,
+    cfgs: HashMap<<Cfg as Entity<Cfg>>::Uuid, Cfg>,
+    sources: Option<Sources>,
+}
+
+impl Entity<Self> for Program {
+    type Uuid = ProgramUuid;
+    fn get_uuid(&self) -> ProgramUuid {
         self.uuid.clone()
     }
-    fn equals(&self, entity: Box<dyn Entity>) -> bool {
+    fn equals(&self, entity: Box<Program>) -> bool {
         self.uuid == entity.get_uuid()
     }
 }
 
 impl Program {
-    // pub fn new() -> Self {
-    //     Self {
-    //         uuid: Uuid::new_v4(),
-    //         cfgs: HashMap::new(),
-    //         sources: HashMap::new(),
-    //     }
-    // }
-}
-
-enum Paradigms {
-    Object,
-    Functionnal,
-    Header,
-    Generics,
-    Bdd,
+    pub fn new() -> Self {
+        Self {
+            // uuid: ProgramUuid(new_uuid()),
+            uuid: ProgramUuid::new(),
+            cfgs: HashMap::new(),
+            sources: None,
+        }
+    }
 }
 
 pub trait Languages {
