@@ -5,8 +5,8 @@ use std::fmt::Debug;
 use thiserror::Error;
 use async_trait::async_trait;
 
-use super::block::Block;
-use super::scope::Scope;
+use super::block::{Block, BlockUuid};
+use super::scope::{Scope, ScopeUuid};
 use crate::{
     core::domain::{new_uuid, Aggregate, Entity, Uuid},
     domain::sources::code::Code,
@@ -37,15 +37,15 @@ pub enum CfgEvent {
     },
     BlockLoaded {
         cfg_uuid: CfgUuid,
-        block_uuid: <Block as Entity<Block>>::Uuid,
-        precedents_uuids: Vec<<Block as Entity<Block>>::Uuid>,
-        successors_uuids: Vec<<Block as Entity<Block>>::Uuid>,
+        block_uuid: BlockUuid,
+        precedents_uuids: Vec<BlockUuid>,
+        successors_uuids: Vec<BlockUuid>,
     },
     ScopeLoaded {
         cfg_uuid: CfgUuid,
-        scope_uuid: <Scope as Entity<Scope>>::Uuid,
-        parent_uuid: Option<<Scope as Entity<Scope>>::Uuid>,
-        childs_uuids: Vec<<Scope as Entity<Scope>>::Uuid>,
+        scope_uuid: ScopeUuid,
+        parent_uuid: Option<ScopeUuid>,
+        childs_uuids: Vec<ScopeUuid>,
     },
 }
 
@@ -53,12 +53,12 @@ pub enum CfgEvent {
 pub enum CfgCommand {
     DiscoverCfg,
     LoadBlock {
-        precedents_uuids: Vec<<Block as Entity<Block>>::Uuid>,
-        successors_uuids: Vec<<Block as Entity<Block>>::Uuid>,
+        precedents_uuids: Vec<BlockUuid>,
+        successors_uuids: Vec<BlockUuid>,
     },
     LoadScope {
-        parent_uuid: Option<<Scope as Entity<Scope>>::Uuid>,
-        childs_uuids: Vec<<Scope as Entity<Scope>>::Uuid>,
+        parent_uuid: Option<ScopeUuid>,
+        childs_uuids: Vec<ScopeUuid>,
     },
 }
 
@@ -66,8 +66,8 @@ pub enum CfgCommand {
 pub struct Cfg {
     uuid: CfgUuid,
     code: Option<Code>,
-    blocks: HashMap<<Block as Entity<Block>>::Uuid, Box<Block>>,
-    scopes: HashMap<<Scope as Entity<Scope>>::Uuid, Box<Scope>>,
+    blocks: HashMap<BlockUuid, Box<Block>>,
+    scopes: HashMap<ScopeUuid, Box<Scope>>,
 }
 
 impl Entity<Self> for Cfg {
@@ -102,11 +102,11 @@ impl Cfg {
         )
     }
 
-    fn get_block(&self, uuid: &<Block as Entity<Block>>::Uuid) -> Option<&Box<Block>> {
+    fn get_block(&self, uuid: &BlockUuid) -> Option<&Box<Block>> {
         self.blocks.get(uuid)
     }
 
-    fn get_scope(&self, uuid: &<Scope as Entity<Scope>>::Uuid) -> Option<&Box<Scope>> {
+    fn get_scope(&self, uuid: &ScopeUuid) -> Option<&Box<Scope>> {
         self.scopes.get(uuid)
     }
 
@@ -135,7 +135,7 @@ impl Aggregate<Self> for Cfg {
               precedents_uuids,
               successors_uuids
             } => {
-                let block_uuid = <Block as Entity<Block>>::Uuid::new();
+                let block_uuid = BlockUuid::new();
                 let event = CfgEvent::BlockLoaded {
                     cfg_uuid: self.uuid.clone(),
                     block_uuid,
@@ -148,7 +148,7 @@ impl Aggregate<Self> for Cfg {
               parent_uuid,
               childs_uuids
             } => {
-                let scope_uuid = <Scope as Entity<Scope>>::Uuid::new();
+                let scope_uuid = ScopeUuid::new();
                 let event = CfgEvent::ScopeLoaded {
                     cfg_uuid: self.uuid.clone(),
                     scope_uuid,

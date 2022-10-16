@@ -3,7 +3,8 @@ use std::boxed::Box;
 use std::collections::HashMap;
 use thiserror::Error;
 
-use super::sources::aggregate::Sources;
+use super::cfg::aggregate::{CfgError, CfgUuid};
+use super::sources::aggregate::{Sources, SourcesError, SourcesEvent};
 use crate::core::domain::{new_uuid, Aggregate, Entity, Uuid};
 use crate::domain::cfg::aggregate::Cfg;
 
@@ -18,24 +19,23 @@ impl ProgramUuid {
 #[derive(Error, Debug)]
 pub enum ProgramError {
     #[error("Sources error")]
-    Sources(<Sources as Aggregate<Sources>>::Error),
+    Sources(SourcesError),
     #[error("Cfg error")]
-    Cfg(<Cfg as Aggregate<Cfg>>::Error),
+    Cfg(CfgError),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub enum ProgramEvent {
-    Sources(<Sources as Aggregate<Sources>>::Event),
+    Sources(SourcesEvent),
     Cfg(<Cfg as Aggregate<Cfg>>::Event),
     ProgramDiscovered {
         program_uuid: ProgramUuid,
         language: Language,
     },
 }
-
 pub struct Program {
     uuid: ProgramUuid,
-    cfgs: HashMap<<Cfg as Entity<Cfg>>::Uuid, Cfg>,
+    cfgs: HashMap<CfgUuid, Cfg>,
     sources: Option<Sources>,
 }
 

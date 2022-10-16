@@ -4,7 +4,7 @@ use std::{collections::{hash_map::Iter, HashMap}, path::PathBuf};
 use std::hash::Hash;
 use async_trait::async_trait;
 
-use super::{file::File, code::Code};
+use super::{file::{File, FileUuid}, code::Code};
 use crate::core::domain::{new_uuid, Aggregate, Entity, Uuid, Event};
 use crate::domain::program::Language;
 
@@ -31,13 +31,13 @@ pub enum SourcesEvent {
         path: PathBuf,
     },
     FileIndexed {
-        file_uuid: <File as Entity<File>>::Uuid,
+        file_uuid: FileUuid,
         path: PathBuf,
     },
     FileNotIndexed {
     },
     FileContentLoaded {
-        file_uuid: <File as Entity<File>>::Uuid,
+        file_uuid: FileUuid,
         code: Code,
     },
 }
@@ -55,7 +55,7 @@ pub enum SourcesCommand {
         path: PathBuf,
     },
     LoadFileContent {
-        file_uuid: <File as Entity<File>>::Uuid,
+        file_uuid: FileUuid,
         code: Code
     },
 }
@@ -66,7 +66,7 @@ impl Event for SourcesEvent {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Sources {
     uuid: SourcesUuid,
-    files: HashMap<<File as Entity<File>>::Uuid, File>,
+    files: HashMap<FileUuid, File>,
     language: Language,
     path: PathBuf,
 }
@@ -103,7 +103,7 @@ impl Aggregate<Self> for Sources {
             Self::Command::IndexFile {
               path,
             } => {
-                let uuid = <File as Entity<File>>::Uuid::new();
+                let uuid = FileUuid::new();
                 let event = Self::Event::FileIndexed {
                     file_uuid: uuid,
                     path,
@@ -179,7 +179,7 @@ impl Sources {
         )
     }
 
-    pub fn get_files(&self) -> Iter<<File as Entity<File>>::Uuid, File> {
+    pub fn get_files(&self) -> Iter<FileUuid, File> {
         self.files.iter()
     }
 
