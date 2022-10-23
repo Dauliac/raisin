@@ -1,9 +1,9 @@
-use crate::core::domain::{Aggregate, Entity};
+use std::sync::{Arc, RwLock};
 
-use std::sync::Arc;
+use super::program::Program;
 
-pub trait Repository<A: Aggregate<A>> {
+pub trait Repository {
     // TODO check why mut
-    fn read(&mut self, uuid: <A as Entity<A>>::Uuid) -> Option<Arc<A>>;
-    fn write(&mut self, aggregate: A);
+    fn read(&self) -> Option<Arc<RwLock<Program>>>;
+    fn write(&mut self, aggregate: Arc<RwLock<Program>>);
 }

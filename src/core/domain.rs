@@ -1,11 +1,13 @@
-use serde::{de::DeserializeOwned, Serialize};
-use std::{any::Any, hash::Hash};
 use async_trait::async_trait;
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use std::{any::Any, fmt::Debug, hash::Hash};
+use uuid::Uuid as ExternalUuid;
 
-pub use uuid::Uuid;
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
+pub struct Uuid(ExternalUuid);
 
 pub fn new_uuid() -> Uuid {
-    Uuid::new_v4()
+    Uuid(ExternalUuid::new_v4())
 }
 
 pub trait Entity<T> {

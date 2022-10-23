@@ -1,10 +1,15 @@
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::boxed::Box;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use thiserror::Error;
 
 use super::cfg::aggregate::{CfgError, CfgUuid};
-use super::sources::aggregate::{Sources, SourcesError, SourcesEvent};
+use super::languages::Languages;
+use super::sources::aggregate::{
+    DiscoverSources, Sources, SourcesError, SourcesEvent, SourcesUuid,
+};
 use crate::core::domain::{new_uuid, Aggregate, Entity, Uuid};
 use crate::domain::cfg::aggregate::Cfg;
 
@@ -18,6 +23,10 @@ impl ProgramUuid {
 
 #[derive(Error, Debug)]
 pub enum ProgramError {
+    #[error("No sources with uuid {0} found")]
+    SourcesNotFound(SourcesUuid),
+    #[error("No cfg with uuid {0} found")]
+    CfgNotFound(CfgUuid),
     #[error("Sources error")]
     Sources(SourcesError),
     #[error("Cfg error")]
@@ -26,17 +35,41 @@ pub enum ProgramError {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub enum ProgramEvent {
-    Sources(SourcesEvent),
-    Cfg(<Cfg as Aggregate<Cfg>>::Event),
     ProgramDiscovered {
         program_uuid: ProgramUuid,
-        language: Language,
+        language: Languages,
+        path: PathBuf,
+    },
+    Sources {
+        program_uuid: ProgramUuid,
+        event: SourcesEvent,
+    },
+    Cfg {
+        program_uuid: ProgramUuid,
+        event: <Cfg as Aggregate<Cfg>>::Event,
     },
 }
+
+#[derive(PartialEq, Eq, Hash, Clone)]
+pub struct DiscoverProgram {
+    pub language: Languages,
+    pub path: PathBuf,
+}
+
+#[derive(PartialEq, Eq, Hash, Clone)]
+pub enum ProgramCommand {
+    DeclareProgram(DiscoverProgram),
+    Sources(<Sources as Aggregate<Sources>>::Command),
+    Cfg(<Cfg as Aggregate<Cfg>>::Command),
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct Program {
     uuid: ProgramUuid,
     cfgs: HashMap<CfgUuid, Cfg>,
     sources: Option<Sources>,
+    path: PathBuf,
+    language: Languages,
 }
 
 impl Entity<Self> for Program {
@@ -49,101 +82,113 @@ impl Entity<Self> for Program {
     }
 }
 
+#[async_trait]
+impl Aggregate<Self> for Program {
+    type Error = ProgramError;
+    type Event = ProgramEvent;
+    type Command = ProgramCommand;
+    type Result = Result<Vec<Self::Event>, Self::Error>;
+
+    async fn handle(&self, command: Self::Command) -> Self::Result {
+        let mut events: Vec<Self::Event> = Vec::new();
+
+        match command {
+            Self::Command::DeclareProgram(command) => {
+                let event = Self::Event::ProgramDiscovered {
+                    program_uuid: self.uuid.clone(),
+                    language: command.language,
+                    path: command.path,
+                };
+                events.push(event);
+            }
+            Self::Command::Sources(command) => {}
+            Self::Command::Cfg(command) => {}
+        };
+
+        Ok(events)
+    }
+
+    fn apply(&mut self, event: Self::Event) {
+        match event {
+            Self::Event::ProgramDiscovered {
+                program_uuid: _,
+                language,
+                path,
+            } => {
+                self.language = language;
+                self.path = path;
+            }
+            Self::Event::Sources {
+                program_uuid,
+                event,
+            } => {
+                match event {
+                    SourcesEvent::SourcesDiscovered {
+                        sources_uuid,
+                        language,
+                        path,
+                    } => {}
+                    SourcesEvent::FileIndexed { file_uuid, path } => {}
+                    SourcesEvent::FileNotIndexed {} => {}
+                    SourcesEvent::FileContentLoaded { file_uuid, code } => {}
+                };
+                // match self.sources.get_key_value()
+            }
+            Self::Event::Cfg {
+                program_uuid,
+                event,
+            } => {}
+        };
+    }
+}
+
 impl Program {
-    pub fn new() -> Self {
-        Self {
-            // uuid: ProgramUuid(new_uuid()),
-            uuid: ProgramUuid::new(),
-            cfgs: HashMap::new(),
-            sources: None,
-        }
-    }
-}
+    pub fn discover(command: DiscoverProgram) -> (Self, <Self as Aggregate<Self>>::Result) {
+        let uuid = ProgramUuid::new();
+        let mut events = vec![ProgramEvent::ProgramDiscovered {
+            program_uuid: uuid.clone(),
+            language: command.language.clone(),
+            path: command.path.clone(),
+        }];
+        let sources_command = DiscoverSources {
+            language: command.language.clone(),
+            path: command.path.clone(),
+        };
 
-pub trait Languages {
-    const NAME: &'static str;
-    const IS_OBJECT_ORIENTED: bool;
-    const IS_FUNCTIONAL_ORIENTED: bool;
-    const HAS_HEADER: bool;
-    const HAS_GENERICS: bool;
-    const IS_BDD: bool;
-    fn get_extentions(&self) -> Vec<&str>;
-}
+        let (sources, sources_result) = Sources::discover(sources_command);
+        match sources_result {
+            Ok(sources_events) => {
+                for sources_event in sources_events {
+                    let program_event = ProgramEvent::Sources {
+                        program_uuid: uuid.clone(),
+                        event: sources_event,
+                    };
+                    events.push(program_event);
+                }
+            }
+            Err(error) => {
+                return (
+                    Self {
+                        uuid: ProgramUuid::new(),
+                        cfgs: HashMap::new(),
+                        sources: None,
+                        path: command.path,
+                        language: command.language,
+                    },
+                    Err(ProgramError::Sources(error)),
+                );
+            }
+        };
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
-pub struct Cpp {}
-impl Languages for Cpp {
-    const NAME: &'static str = "c++";
-    const IS_OBJECT_ORIENTED: bool = true;
-    const IS_FUNCTIONAL_ORIENTED: bool = true;
-    const HAS_HEADER: bool = true;
-    const HAS_GENERICS: bool = true;
-    const IS_BDD: bool = false;
-    fn get_extentions(&self) -> Vec<&str> {
-        vec!["hpp", "cpp", "h", "c++"]
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
-pub struct Rust;
-impl Languages for Rust {
-    const NAME: &'static str = "rust";
-    const IS_OBJECT_ORIENTED: bool = true;
-    const IS_FUNCTIONAL_ORIENTED: bool = true;
-    const HAS_HEADER: bool = false;
-    const HAS_GENERICS: bool = true;
-    const IS_BDD: bool = false;
-    fn get_extentions(&self) -> Vec<&str> {
-        vec!["rs"]
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
-pub struct C;
-impl Languages for C {
-    const NAME: &'static str = "c";
-    const IS_OBJECT_ORIENTED: bool = false;
-    const IS_FUNCTIONAL_ORIENTED: bool = true;
-    const HAS_HEADER: bool = true;
-    const HAS_GENERICS: bool = false;
-    const IS_BDD: bool = false;
-    fn get_extentions(&self) -> Vec<&str> {
-        vec!["c", "h"]
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
-pub struct Java;
-impl Languages for Java {
-    const NAME: &'static str = "java";
-    const IS_OBJECT_ORIENTED: bool = true;
-    const IS_FUNCTIONAL_ORIENTED: bool = true; // Question
-    const HAS_HEADER: bool = false;
-    const HAS_GENERICS: bool = true;
-    const IS_BDD: bool = false;
-    fn get_extentions(&self) -> Vec<&str> {
-        vec!["java"]
-    }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq, Hash)]
-pub enum Language {
-    Cpp(Cpp),
-    Rust(Rust),
-    C(C),
-    Java(Java),
-}
-
-pub struct AvailableLanguages {}
-impl AvailableLanguages {
-    pub fn rust() -> Language {
-        let lang = Rust {};
-
-        Language::Rust(lang)
-    }
-
-    pub fn cpp() -> Language {
-        let lang = Cpp {};
-        Language::Cpp(lang)
+        return (
+            Self {
+                uuid: ProgramUuid::new(),
+                cfgs: HashMap::new(),
+                sources: Some(sources),
+                path: command.path,
+                language: command.language,
+            },
+            Ok(events),
+        );
     }
 }

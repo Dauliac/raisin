@@ -2,7 +2,7 @@
 pub mod app;
 pub mod core;
 pub mod domain;
-// pub mod infra;
+pub mod infra;
 
 use app::application::Application;
 use tokio::main;

@@ -1,9 +1,9 @@
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::boxed::Box;
 use std::collections::HashMap;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 use thiserror::Error;
-use async_trait::async_trait;
 
 use super::block::{Block, BlockUuid};
 use super::scope::{Scope, ScopeUuid};
@@ -17,6 +17,12 @@ pub struct CfgUuid(Uuid);
 impl CfgUuid {
     pub fn new() -> Self {
         Self(new_uuid())
+    }
+}
+
+impl Display for CfgUuid {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
 
@@ -49,7 +55,7 @@ pub enum CfgEvent {
     },
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub enum CfgCommand {
     DiscoverCfg,
     LoadBlock {
@@ -96,10 +102,7 @@ impl Cfg {
         let events = vec![CfgEvent::CfgDiscovered {
             cfg_uuid: uuid.clone(),
         }];
-        return (
-            Self::new(uuid),
-            Ok(events),
-        )
+        return (Self::new(uuid), Ok(events));
     }
 
     fn get_block(&self, uuid: &BlockUuid) -> Option<&Box<Block>> {
@@ -122,7 +125,7 @@ impl Aggregate<Self> for Cfg {
     type Command = CfgCommand;
     type Result = Result<Vec<Self::Event>, Self::Error>;
 
-    async fn handle(&self, command: Self::Command) ->  Self::Result {
+    async fn handle(&self, command: Self::Command) -> Self::Result {
         let mut events = Vec::new();
         match command {
             Self::Command::DiscoverCfg => {
@@ -130,10 +133,10 @@ impl Aggregate<Self> for Cfg {
                     cfg_uuid: self.uuid.clone(),
                 };
                 events.push(event);
-            },
+            }
             Self::Command::LoadBlock {
-              precedents_uuids,
-              successors_uuids
+                precedents_uuids,
+                successors_uuids,
             } => {
                 let block_uuid = BlockUuid::new();
                 let event = CfgEvent::BlockLoaded {
@@ -143,10 +146,10 @@ impl Aggregate<Self> for Cfg {
                     successors_uuids,
                 };
                 events.push(event);
-            },
+            }
             Self::Command::LoadScope {
-              parent_uuid,
-              childs_uuids
+                parent_uuid,
+                childs_uuids,
             } => {
                 let scope_uuid = ScopeUuid::new();
                 let event = CfgEvent::ScopeLoaded {
@@ -156,7 +159,7 @@ impl Aggregate<Self> for Cfg {
                     childs_uuids,
                 };
                 events.push(event);
-            },
+            }
         };
 
         Ok(events)
@@ -164,25 +167,20 @@ impl Aggregate<Self> for Cfg {
 
     fn apply(&mut self, event: Self::Event) {
         match event {
-            Self::Event::CfgDiscovered {
-              cfg_uuid
-            } => {
+            Self::Event::CfgDiscovered { cfg_uuid } => {
                 self.uuid = cfg_uuid;
                 self.code = None;
                 self.blocks = HashMap::new();
                 self.scopes = HashMap::new();
-            },
-            Self::Event::CfgParsed {
-              cfg_uuid: _,
-              code
-            } => {
+            }
+            Self::Event::CfgParsed { cfg_uuid: _, code } => {
                 self.code = Some(code);
-            },
+            }
             Self::Event::BlockLoaded {
-              cfg_uuid: _,
-              block_uuid,
-              precedents_uuids,
-              successors_uuids,
+                cfg_uuid: _,
+                block_uuid,
+                precedents_uuids,
+                successors_uuids,
             } => {
                 let mut block = Block::new(block_uuid);
                 for precedent_uuid in precedents_uuids {
@@ -191,19 +189,19 @@ impl Aggregate<Self> for Cfg {
                 for successor_uuid in successors_uuids {
                     block.add_successor(successor_uuid);
                 }
-            },
+            }
             Self::Event::ScopeLoaded {
-              cfg_uuid: _,
-              scope_uuid,
-              parent_uuid,
-              childs_uuids,
+                cfg_uuid: _,
+                scope_uuid,
+                parent_uuid,
+                childs_uuids,
             } => {
                 let mut scope = Scope::new(scope_uuid);
                 scope.set_parent(parent_uuid);
                 for child_uuid in childs_uuids {
                     scope.set_child(child_uuid);
                 }
-            },
+            }
         }
     }
 }

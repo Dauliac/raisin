@@ -1,5 +1,5 @@
 use crate::core::domain::{new_uuid, Entity, Uuid};
-use crate::domain::program::Language;
+use crate::domain::languages::Languages;
 use serde::{Deserialize, Serialize};
 use std::collections::btree_map::Iter as MapIter;
 use std::collections::hash_set::Iter as HashSetIter;
@@ -19,7 +19,7 @@ pub struct File {
     uuid: FileUuid,
     pub path: PathBuf,
     lines: BTreeMap<usize, String>,
-    language: Language,
+    language: Languages,
     includes: HashSet<FileUuid>,
 }
 
@@ -34,7 +34,7 @@ impl Entity<Self> for File {
 }
 
 impl File {
-    pub fn new(uuid: FileUuid, path: PathBuf, language: Language) -> File {
+    pub fn new(uuid: FileUuid, path: PathBuf, language: Languages) -> File {
         Self {
             uuid,
             path,
@@ -77,7 +77,7 @@ impl File {
         self.includes.iter()
     }
 
-    pub fn get_language(&self) -> Language {
+    pub fn get_language(&self) -> Languages {
         self.language.clone()
     }
     // pub fn insert_content(&mut self, code: Code) {

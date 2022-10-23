@@ -3,21 +3,11 @@ use async_trait::async_trait;
 use priority_queue::PriorityQueue;
 use std::sync::Arc;
 
-use crate::{domain::program::Program, core::domain::Aggregate};
-
-type Event = <Program as Aggregate<Program>>::Event;
-pub enum Listener {
-}
-
-#[async_trait]
-pub trait EventBus {
-    fn subscribe(&mut self, event: Event, priority: u8, listeners: Listener);
-    async fn publish(&self, event: Event);
-}
+use crate::app::cqrs_es::{Events, EventHandlers, EventBus};
 
 pub struct MemoryEventBus {
-    listeners: MultiMap<Arc<Event>, Listener>,
-    queue: PriorityQueue<Arc<Event>, u8>,
+    listeners: MultiMap<Arc<Events>, EventHandlers>,
+    queue: PriorityQueue<Arc<Events>, u8>,
 }
 
 impl MemoryEventBus {
@@ -31,19 +21,80 @@ impl MemoryEventBus {
 
 #[async_trait]
 impl EventBus for MemoryEventBus {
-    fn subscribe(&mut self, event: Event, priority: u8, listener: Listener) {
+    fn subscribe(&mut self, event: Events, handler: EventHandlers) {
         let event = Arc::new(event);
-        self.queue.push(event.clone(), priority);
-        self.listeners.insert(event, listener);
+        self.listeners.insert(event, handler);
     }
 
-    async fn publish(&self, event: Event) {
-        let _listeners = match self.listeners.get_vec(&event) {
-            Some(listeners) => listeners,
-            None => { return }
+    async fn publish(&self, event: Events, priority: Option<u8>) {
+        let priority =  match priority {
+            Some(priority) => priority,
+            None => 0,
         };
-        // for listener in listeners.iter() {
-            // listener
-        // }
+        self.queue.push(event.clone, priority);
+    }
+
+    async fn run(&mut self) {
+        loop {
+            match self.queue.peek() {
+                Some(event) => {
+                    let _listeners = match self.listeners.get_vec(&event) {
+                        Some(listeners) => listeners,
+                        None => { return }
+                    };
+                    for listener in self.listeners.iter() {
+                        match listener {
+                            _ => {
+                                let listener: Box<EventHandlers> = Box::new(listener);
+                                listener.notify(event.clone());
+                            },
+                        };
+                    }
+                },
+                None => (),
+            }
+        }
     }
 }
+
+// pub struct ParrallelMemoryEventBus {
+//     listeners: MultiMap<Arc<Event>, Listeners>,
+//     queue: PriorityQueue<Arc<Event>, u8>,
+// }
+
+// impl ParrallelMemoryEventBus  {
+//     pub fn new() -> Self {
+//         Self {
+//             listeners: MultiMap::new(),
+//             queue: PriorityQueue::new(),
+//         }
+//     }
+// }
+
+// #[async_trait]
+// impl EventBus for ParrallelMemoryEventBus {
+//     fn subscribe(&mut self, event: Event, listener: Listeners) {
+//         let event = Arc::new(event);
+//         self.listeners.insert(event, listener);
+//     }
+
+//     async fn publish(&self, event: Event, priority: Option<u8>) {
+//         let priority =  match priority {
+//             Some(priority) => priority,
+//             None => 0,
+//         };
+//         self.queue.push(event);
+//         let _listeners = match self.listeners.get_vec(&event) {
+//             Some(listeners) => listeners,
+//             None => { return }
+//         };
+//         for listener in self.listeners.iter() {
+//             match listener {
+//                 _ => {
+//                     let listener: Box<Listener> = Box::new(listener);
+//                     listener.notify(event.clone());
+//                 },
+//             };
+//         }
+//     }
+// }

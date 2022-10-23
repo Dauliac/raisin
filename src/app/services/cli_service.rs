@@ -1,6 +1,6 @@
-use clap::{Parser, ArgEnum, Subcommand};
-use clap_complete::Shell;
 use async_trait::async_trait;
+use clap::{ArgEnum, Parser, Subcommand};
+use clap_complete::Shell;
 
 use super::Service;
 
@@ -33,11 +33,10 @@ pub enum Commands {
     Complete {
         #[clap(arg_enum, value_parser)]
         shell: Shell,
-    }
+    },
 }
 
-pub struct ArgParserService  {
-}
+pub struct ArgParserService {}
 
 impl ArgParserService {
     pub fn new() -> Self {
@@ -53,4 +52,3 @@ impl Service<Cli> for ArgParserService {
         options
     }
 }
-

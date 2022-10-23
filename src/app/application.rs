@@ -1,15 +1,16 @@
-use std::path::PathBuf;
-use std::sync::Arc;
 use clap::{Command, CommandFactory};
 use clap_complete::{generate, Generator};
 use std::io;
+use std::path::PathBuf;
 
-use super::services::{cli_service::{ArgParserService, Cli, Commands, Language as CliLanguage }, Service};
+use super::services::{
+    cli_service::{ArgParserService, Cli, Commands, Language as CliLanguage},
+    Service,
+};
 // use crate::app::services::parse_project_service::{ParseProjectService, Config as ParseProjectConfig};
 // use crate::app::services::load_project_service::{LoadProjectService, Config as LoadProjectConfig };
 // use crate::infra::event_bus::MemoryEventBus;
-use crate::domain::program::AvailableLanguages;
-
+use crate::domain::languages::AvailableLanguages;
 
 pub struct Application {
     cli: Option<Cli>,
@@ -20,7 +21,9 @@ fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
 }
 
 impl Application {
-    pub fn new() -> Self { Self { cli: None}}
+    pub fn new() -> Self {
+        Self { cli: None }
+    }
     pub async fn read_config(&mut self) {
         let mut arg_svc = ArgParserService::new();
         self.cli = Some(arg_svc.run().await);
@@ -33,8 +36,8 @@ impl Application {
                 eprintln!("Generating completion file for {:?}...", shell);
                 let mut cmd = Cli::command();
                 print_completions(shell.clone(), &mut cmd);
-            },
-            Commands::Parse { path, language }=> {
+            }
+            Commands::Parse { path, language } => {
                 let language = match language {
                     CliLanguage::Rust => AvailableLanguages::rust(),
                     _ => AvailableLanguages::rust(),
