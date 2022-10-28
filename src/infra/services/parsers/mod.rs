@@ -7,10 +7,10 @@ use crate::domain::{
     sources::aggregate::Sources,
 };
 
-use self::tree_sitter::TreeSitterParserService;
+// use self::tree_sitter::TreeSitterParserService;
 
 pub mod scope;
-pub mod tree_sitter;
+// pub mod tree_sitter;
 
 pub trait Parser {
     fn run(&self, sources: Arc<Sources>) -> Result<(Vec<Cfg>, Vec<CfgEvent>), Error>;
@@ -18,9 +18,9 @@ pub trait Parser {
 
 pub struct AvailableParsers {}
 impl AvailableParsers {
-    pub fn tree_sitter() -> Box<dyn Parser> {
-        return Box::new(TreeSitterParserService::new());
-    }
+    // pub fn tree_sitter() -> Box<dyn Parser> {
+    //     return Box::new(TreeSitterParserService::new());
+    // }
 }
 
 #[derive(Error, Debug)]

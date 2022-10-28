@@ -6,13 +6,11 @@ use tree_sitter::Parser as TsParser;
 use crate::core::domain::{Entity, Uuid};
 use crate::domain::cfg::aggregate::Cfg;
 use crate::domain::cfg::aggregate::CfgEvent;
-use crate::domain::program::Language;
-// use crate::domain::program::Languages;
+use crate::domain::languages::Languages;
 use crate::domain::sources::aggregate::Sources;
 use crate::domain::sources::code::Code;
 use crate::domain::sources::code::Coordinate;
 use crate::domain::sources::code::Point;
-// use crate::domain::sources::file::File;
 
 use super::Error;
 use super::Parser;
@@ -31,10 +29,10 @@ impl TreeSitterParserService {
     fn detect_language(&self, language: &Language) -> TsLanguage {
         match language {
             // TODO(dauliac): fix parsers with other tree_sitter parsers
-            Language::Cpp(_) => unsafe { tree_sitter_rust() },
-            Language::Rust(_) => unsafe { tree_sitter_rust() },
-            Language::C(_) => unsafe { tree_sitter_rust() },
-            Language::Java(_) => unsafe { tree_sitter_rust() },
+            Languages::Cpp(_) => unsafe { tree_sitter_rust() },
+            Languages::Rust(_) => unsafe { tree_sitter_rust() },
+            Languages::C(_) => unsafe { tree_sitter_rust() },
+            Languages::Java(_) => unsafe { tree_sitter_rust() },
         }
     }
     fn iter_on_nodes() {}

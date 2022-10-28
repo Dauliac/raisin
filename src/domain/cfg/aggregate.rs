@@ -26,7 +26,7 @@ impl Display for CfgUuid {
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
 pub enum CfgError {
     #[error("given sources was not loaded")]
     CfgNotParsable,
@@ -55,7 +55,7 @@ pub enum CfgEvent {
     },
 }
 
-#[derive(PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub enum CfgCommand {
     DiscoverCfg,
     LoadBlock {

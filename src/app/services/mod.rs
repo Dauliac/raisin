@@ -7,4 +7,5 @@ pub trait Service<R> {
 
 // pub mod load_project_service;
 // pub mod parse_project_service;
-pub mod cli_service;
+pub mod cli;
+pub mod logger;

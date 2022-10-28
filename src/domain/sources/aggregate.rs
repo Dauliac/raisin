@@ -29,7 +29,7 @@ impl Display for SourcesUuid {
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
 pub enum SourcesError {
     #[error("given dir `${path:?}` not exists")]
     FileNotIndexed { path: PathBuf },
@@ -53,13 +53,13 @@ pub enum SourcesEvent {
     },
 }
 
-#[derive(PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub struct DiscoverSources {
     pub language: Languages,
     pub path: PathBuf,
 }
 
-#[derive(PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub enum SourcesCommand {
     DeclareSources(DiscoverSources),
     IndexFile { path: PathBuf },

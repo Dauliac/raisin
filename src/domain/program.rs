@@ -21,7 +21,7 @@ impl ProgramUuid {
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
 pub enum ProgramError {
     #[error("No sources with uuid {0} found")]
     SourcesNotFound(SourcesUuid),
@@ -50,15 +50,15 @@ pub enum ProgramEvent {
     },
 }
 
-#[derive(PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub struct DiscoverProgram {
     pub language: Languages,
     pub path: PathBuf,
 }
 
-#[derive(PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub enum ProgramCommand {
-    DeclareProgram(DiscoverProgram),
+    DiscoverProgram(DiscoverProgram),
     Sources(<Sources as Aggregate<Sources>>::Command),
     Cfg(<Cfg as Aggregate<Cfg>>::Command),
 }
@@ -93,7 +93,7 @@ impl Aggregate<Self> for Program {
         let mut events: Vec<Self::Event> = Vec::new();
 
         match command {
-            Self::Command::DeclareProgram(command) => {
+            Self::Command::DiscoverProgram(command) => {
                 let event = Self::Event::ProgramDiscovered {
                     program_uuid: self.uuid.clone(),
                     language: command.language,
