@@ -1,17 +1,20 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::{
-    sync::{Arc, RwLock},
+    sync::Arc,
     time::SystemTime,
 };
+use tokio::sync::RwLock;
 
 use crate::{
     core::domain::Aggregate,
     domain::{
         program::{Program, ProgramCommand},
         repository::Repository,
-    },
+    }, infra::services::bus::event_bus,
 };
+
+use super::event::{EventBus, Events};
 
 #[derive(Serialize, Deserialize,Debug, PartialEq, Eq, Hash, Clone)]
 pub enum CommandPriority {
@@ -61,8 +64,13 @@ impl DomainCommand {
         }
     }
 
-    pub async fn run(&mut self, repository: Arc<RwLock<dyn Repository>>) -> <Program as Aggregate<Program>>::Result {
-        let mut writable_locked_repo = repository.write().unwrap();
+    pub async fn run(
+      &mut self,
+      repository: Arc<RwLock<dyn Repository>>,
+      event_bus: Arc<RwLock<dyn EventBus>>
+    ) -> <Program as Aggregate<Program>>::Result {
+
+        let mut writable_locked_repo = repository.write().await;
         self.timestamp = Some(SystemTime::now());
         let result: <Program as Aggregate<Program>>::Result;
         let command = self.command.clone();
@@ -85,22 +93,23 @@ impl DomainCommand {
                 };
                 {
                     // Lock program
-                    let mut writable_program = match program.write() {
-                        Ok(program) => program,
-                        Err(error) => {
-                            panic!("Failed to write lock program");
-                        }
-                    };
+                    let mut writable_program = program.write().await;
                     result = writable_program.handle(self.command.clone()).await;
+                    let mut writable_event_bus = event_bus.write().await;
 
                     match &result {
                         Ok(events) => {
                             let events = events.clone();
                             for event in events {
-                                writable_program.apply(event);
+                                writable_program.apply(event.clone());
+                                let app_event = Events::new_domain(event);
+                                writable_event_bus.publish(app_event);
                             }
                         },
-                        Err(_) => {}
+                        Err(error) => {
+                            let app_event = Events::new_domain_error(error.clone());
+                            writable_event_bus.publish(app_event);
+                        }
                     }
                 } // Free program write lock
 

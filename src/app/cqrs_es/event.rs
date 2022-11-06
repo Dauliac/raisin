@@ -1,4 +1,5 @@
-use std::{time::SystemTime, sync::{Arc, RwLock}};
+use std::{time::SystemTime, sync::Arc};
+use tokio::sync::RwLock;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use strum_macros::{EnumString, EnumVariantNames, IntoStaticStr};
@@ -96,8 +97,8 @@ pub enum EventHandlers {
 }
 
 #[async_trait]
-pub trait EventBus {
-    fn subscribe(&mut self, event: Events, handler: EventHandlers);
+pub trait EventBus: Send + Sync {
+    async fn subscribe(&mut self, event: Events, handler: EventHandlers);
     async fn publish(&mut self, event: Events);
     async fn run(&mut self);
 }
