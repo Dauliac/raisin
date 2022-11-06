@@ -89,7 +89,7 @@ impl Events {
 }
 
 pub trait EventHandler: Send + Sync {
-    fn notify(&self, event: Events);
+    fn notify(&mut self, event: Events);
 }
 
 pub enum EventHandlers {

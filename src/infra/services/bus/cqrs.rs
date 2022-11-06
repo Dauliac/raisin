@@ -38,24 +38,21 @@ impl CommandBus for MemoryCommandBus {
         let queue = self.queue.clone();
         let repo = self.repository.clone();
         let event_bus = self.event_bus.clone();
-        // Spawn thread to consume commands
-        tokio::spawn(async move {
-            loop {
-                match queue.write().await.pop() {
-                    Some((command, _priority)) => {
-                        let repo = repo.clone();
-                        let event_bus = event_bus.clone();
-                        tokio::spawn(async move {
-                            match command {
-                                Commands::Domain(mut command) => {
-                                    let _ = command.run(repo, event_bus).await;
-                                },
-                            };
-                        });
-                    },
-                    None => (),
-                };
-            }
-        });
+
+        match queue.write().await.pop() {
+                Some((command, _priority)) => {
+                    let repo = repo.clone();
+                    let event_bus = event_bus.clone();
+                    tokio::spawn(async move {
+                        match command {
+                            // println!("comamnd to write");
+                            Commands::Domain(mut command) => {
+                                let _ = command.run(repo, event_bus).await;
+                            },
+                        };
+                    });
+                },
+                None => (),
+        };
     }
 }

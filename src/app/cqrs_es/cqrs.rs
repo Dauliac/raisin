@@ -70,54 +70,62 @@ impl DomainCommand {
       event_bus: Arc<RwLock<dyn EventBus>>
     ) -> <Program as Aggregate<Program>>::Result {
 
-        let mut writable_locked_repo = repository.write().await;
         self.timestamp = Some(SystemTime::now());
-        let result: <Program as Aggregate<Program>>::Result;
         let command = self.command.clone();
-        match command {
+        let (
+            program,
+            result
+        ) = match command {
             ProgramCommand::DiscoverProgram(command) => {
                 let discover = Program::discover(command);
                 let program = Arc::new(RwLock::new(discover.0));
-                writable_locked_repo.write(program);
 
-                result = discover.1;
+                let result = discover.1;
 
-                return result;
+                (program, result)
             },
             _ => {
-                let program = match writable_locked_repo.read() {
+                let program = match repository.read().await.read() {
                     None => {
                         panic!("No program loaded in the repository");
                     },
                     Some(program) => program,
                 };
-                {
+
+                println!("command");
                     // Lock program
-                    let mut writable_program = program.write().await;
-                    result = writable_program.handle(self.command.clone()).await;
-                    let mut writable_event_bus = event_bus.write().await;
+                let writable_program = program.write().await;
+                let result = writable_program.handle(self.command.clone()).await;
+                drop(writable_program);
 
-                    match &result {
-                        Ok(events) => {
-                            let events = events.clone();
-                            for event in events {
-                                writable_program.apply(event.clone());
-                                let app_event = Events::new_domain(event);
-                                writable_event_bus.publish(app_event);
-                            }
-                        },
-                        Err(error) => {
-                            let app_event = Events::new_domain_error(error.clone());
-                            writable_event_bus.publish(app_event);
-                        }
-                    }
-                } // Free program write lock
+                (program, result)
+            },
+        };
+        let mut writable_event_bus = event_bus.write().await;
 
-                writable_locked_repo.write(program);
+        match &result {
+            Ok(events) => {
+                let events = events.clone();
+                let mut write_program = program.write().await;
+                for event in events {
+                    write_program.apply(event.clone());
 
-                return result;
+                    let app_event = Events::new_domain(event);
+                    println!("publish event {:?}", app_event);
+                    writable_event_bus.publish(app_event).await;
+                }
+
+            },
+            Err(error) => {
+                let app_event = Events::new_domain_error(error.clone());
+                writable_event_bus.publish(app_event).await;
             }
-        }
+        };
+
+        let mut writable_locked_repo = repository.write().await;
+        writable_locked_repo.write(program);
+
+        return result;
     }
 }
 

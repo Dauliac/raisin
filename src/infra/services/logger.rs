@@ -15,7 +15,7 @@ impl SimpleLogger {
 }
 
 impl EventHandler for SimpleLogger {
-    fn notify(&self, event: Events) {
+    fn notify(&mut self, event: Events) {
         self.log(event)
     }
 }

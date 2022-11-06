@@ -3,13 +3,14 @@ use clap_complete::{generate, Generator};
 use tokio::sync::RwLock;
 use std::{io, sync::Arc};
 use std::path::PathBuf;
+use std::{thread, time};
 
 use super::cqrs_es::cqrs::{CommandBus, Commands};
-use super::cqrs_es::event::{EventBus, Events};
+use super::cqrs_es::event::EventBus;
 use super::handlers::subscribe_logger;
 use super::services::Service;
 use super::services::cli::{ArgParserService, Cli, Commands as CliCommands , Language as CliLanguage};
-use crate::domain::program::{Program, ProgramCommand, DiscoverProgram};
+use crate::domain::program::{ProgramCommand, DiscoverProgram};
 use crate::domain::repository::Repository;
 use crate::infra::repositories::RepositoryInMemory;
 use crate::infra::services::bus::cqrs::MemoryCommandBus;
@@ -58,10 +59,7 @@ impl Application {
                 let event_bus: Arc<RwLock<dyn EventBus + Sync + Send>> = Arc::new(RwLock::new(event_bus));
                 event_bus.write().await.run().await;
                 let command_bus: Arc<RwLock<dyn CommandBus>> =
-                  Arc::new(RwLock::new(MemoryCommandBus::new(repository, event_bus)));
-
-                command_bus.write().await.run().await;
-
+                  Arc::new(RwLock::new(MemoryCommandBus::new(repository, event_bus.clone())));
 
                 // Use case one: load program
                 let discover_command = DiscoverProgram {
@@ -74,18 +72,15 @@ impl Application {
                     let mut command_bus = command_bus.write().await;
                     command_bus.publish(command).await;
                 }
+                // let ten_millis = time::Duration::from_millis(10);
+                // thread::sleep(ten_millis);
 
-                // Env of use case
-
-                // let mut load_project_service = LoadProjectService::new(config);
-                // let sources_repo = load_project_service.run().await;
-                // let sources = sources_repo.read().unwrap();
-                // let parse_projet_config = ParseProjectConfig {
-                //     sources,
-                //     event_bus: event_bus.clone(),
-                // };
-                // let mut parse_project_service = ParseProjectService::new(parse_projet_config);
-                // let _cfg_repo = parse_project_service.run().await;
+                loop {
+                    let mut event_bus = event_bus.write().await;
+                    let _ = event_bus.run().await;
+                    let mut command_bus = command_bus.write().await;
+                    let _ = command_bus.run().await;
+                }
             }
         };
     }
