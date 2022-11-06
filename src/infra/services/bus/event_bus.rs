@@ -1,16 +1,16 @@
 use multimap::MultiMap;
 use async_trait::async_trait;
 use priority_queue::PriorityQueue;
+use strum::VariantNames;
 
-use crate::app::cqrs_es::event::{
+use crate::{app::cqrs_es::event::{
     Events,
     EventHandlers,
     EventBus,
-    EventPriority
-};
+}, core::domain::Event};
 
 pub struct MemoryEventBus {
-    listeners: MultiMap<Events, EventHandlers>,
+    listeners: MultiMap<String, EventHandlers>,
     queue: PriorityQueue<Events, u8>,
 }
 
@@ -25,8 +25,8 @@ impl MemoryEventBus {
 
 #[async_trait]
 impl EventBus for MemoryEventBus {
-    fn subscribe(&mut self, event: Events, priority: EventPriority, handler: EventHandlers) {
-        self.listeners.insert(event, handler);
+    fn subscribe(&mut self, event: Events, handler: EventHandlers) {
+        self.listeners.insert(event.get_id(), handler);
     }
 
     async fn publish(&mut self, event: Events) {
@@ -40,24 +40,26 @@ impl EventBus for MemoryEventBus {
     async fn run(&mut self) {
         loop {
             match self.queue.peek() {
-                Some((event, priority)) => {
-                    let _listeners = match self.listeners.get_vec(&event) {
+                Some((event, _priority)) => {
+                    todo!("change multimap by a tree ?");
+                    let id = &event.get_id();
+                    let handlers_for_current_event = match self.listeners.get_vec(id) {
                         Some(listeners) => listeners,
                         None => { return }
                     };
-                    for (_, handler) in self.listeners.iter_mut() {
+                    for handler in handlers_for_current_event.iter_mut() {
                         match handler {
                             EventHandlers::Logger(logger) => {
-                                let mut logger = match logger.write() {
-                                    Ok(logger) => logger,
+                                match logger.write() {
+                                    Ok(logger) => logger.notify(event.clone()),
                                     Err(error) => {
                                         todo!("Add pannic into logger to stop and log error");
                                         panic!("Failed to lock logger");
                                     }
                                 };
-                                logger.notify(event.clone());
                             },
                         };
+
                     }
                 },
                 None => (),

@@ -1,5 +1,7 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use strum_macros::{EnumString, EnumVariantNames, IntoStaticStr};
+use strum::VariantNames;
 use std::hash::Hash;
 use std::{
     collections::{hash_map::Iter, HashMap},
@@ -15,7 +17,7 @@ use super::{
 use crate::core::domain::{new_uuid, Aggregate, Entity, Event, Uuid};
 use crate::domain::languages::Languages;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
 pub struct SourcesUuid(Uuid);
 impl SourcesUuid {
     pub fn new() -> Self {
@@ -29,14 +31,22 @@ impl Display for SourcesUuid {
     }
 }
 
-#[derive(Error, Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(EnumString, EnumVariantNames, IntoStaticStr, Default, Error, Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+#[strum(serialize_all = "kebab_case")]
 pub enum SourcesError {
+    #[default]
+    #[error("No error")]
+    Unknown,
     #[error("given dir `${path:?}` not exists")]
     FileNotIndexed { path: PathBuf },
 }
+impl Event<SourcesError> for SourcesError {}
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
+#[derive(Debug, Default, EnumString, EnumVariantNames, IntoStaticStr, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
+#[strum(serialize_all = "kebab_case")]
 pub enum SourcesEvent {
+    #[default]
+    Unknown,
     SourcesDiscovered {
         sources_uuid: SourcesUuid,
         language: Languages,
@@ -52,6 +62,7 @@ pub enum SourcesEvent {
         code: Code,
     },
 }
+impl Event<SourcesEvent> for SourcesEvent {}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub struct DiscoverSources {
@@ -65,8 +76,6 @@ pub enum SourcesCommand {
     IndexFile { path: PathBuf },
     LoadFileContent { file_uuid: FileUuid, code: Code },
 }
-
-impl Event for SourcesEvent {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Sources {
@@ -127,6 +136,7 @@ impl Aggregate<Self> for Sources {
 
     fn apply(&mut self, event: Self::Event) {
         match event {
+            Self::Event::Unknown => {},
             Self::Event::SourcesDiscovered {
                 sources_uuid: _,
                 language,

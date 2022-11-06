@@ -1,9 +1,10 @@
 use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use strum::VariantNames;
 use std::{any::Any, fmt::Debug, hash::Hash};
 use uuid::Uuid as ExternalUuid;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
 pub struct Uuid(ExternalUuid);
 
 pub fn new_uuid() -> Uuid {
@@ -17,11 +18,27 @@ pub trait Entity<T> {
     fn equals(&self, entity: Box<T>) -> bool;
 }
 
-pub trait Value: Clone + PartialEq {
-    fn equals(&self, value: &dyn Any) -> bool;
+pub trait Value<T>: Default + Debug + Clone + Serialize + DeserializeOwned + PartialEq + Hash + Eq {
+    fn equals(&self, value: &T) -> bool;
 }
 
-pub trait Event: Hash + Eq {}
+pub trait Const: Default + Debug + Clone + Serialize + DeserializeOwned + PartialEq + Hash + Eq {}
+
+
+pub trait Event<T>: Debug + Clone + VariantNames + Into<&'static str> + Serialize + DeserializeOwned + PartialEq + Hash + Eq + {
+    const SEPARATOR: &'static str = "::";
+    fn get_id_variants() -> Vec<String> {
+        let mut variants = vec![];
+        for id in Self::VARIANTS {
+            variants.push(format!("{}{}", Self::SEPARATOR, id));
+        }
+        variants
+    }
+    fn get_id(&self) -> String {
+        let id: &'static str = self.clone().into();
+        format!("{}{}", Self::SEPARATOR, id)
+    }
+}
 
 #[async_trait]
 pub trait Aggregate<T>: Entity<T> + Serialize + DeserializeOwned + Sync + Send {

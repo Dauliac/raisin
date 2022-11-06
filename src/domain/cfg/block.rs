@@ -3,7 +3,7 @@ use std::collections::HashSet;
 
 use crate::core::domain::{new_uuid, Entity, Uuid};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
 pub struct BlockUuid(Uuid);
 impl BlockUuid {
     pub fn new() -> Self {

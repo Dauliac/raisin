@@ -5,7 +5,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
 pub struct ScopeUuid(Uuid);
 impl ScopeUuid {
     pub fn new() -> Self {

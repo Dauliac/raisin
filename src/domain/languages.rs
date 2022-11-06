@@ -10,7 +10,7 @@ pub trait Language {
     fn get_extentions(&self) -> Vec<&str>;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Cpp {}
 impl Language for Cpp {
     const NAME: &'static str = "c++";
@@ -24,7 +24,7 @@ impl Language for Cpp {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Rust;
 impl Language for Rust {
     const NAME: &'static str = "rust";
@@ -38,7 +38,7 @@ impl Language for Rust {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct C;
 impl Language for C {
     const NAME: &'static str = "c";
@@ -52,7 +52,7 @@ impl Language for C {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub struct Java;
 impl Language for Java {
     const NAME: &'static str = "java";
@@ -68,10 +68,16 @@ impl Language for Java {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq, Hash)]
 pub enum Languages {
-    Cpp(Cpp),
     Rust(Rust),
+    Cpp(Cpp),
     C(C),
     Java(Java),
+}
+
+impl Default for Languages {
+    fn default() -> Self {
+        Languages::Rust(Rust::default())
+    }
 }
 
 pub struct AvailableLanguages {}

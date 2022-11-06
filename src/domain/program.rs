@@ -2,18 +2,19 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::boxed::Box;
 use std::collections::HashMap;
+use strum_macros::{EnumString, EnumVariantNames, IntoStaticStr};
 use std::path::PathBuf;
 use thiserror::Error;
 
+use crate::core::domain::{new_uuid, Aggregate, Entity, Uuid, Event, Value};
 use super::cfg::aggregate::{CfgError, CfgUuid};
 use super::languages::Languages;
 use super::sources::aggregate::{
     DiscoverSources, Sources, SourcesError, SourcesEvent, SourcesUuid,
 };
-use crate::core::domain::{new_uuid, Aggregate, Entity, Uuid};
-use crate::domain::cfg::aggregate::Cfg;
+use super::cfg::aggregate::Cfg;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
 pub struct ProgramUuid(Uuid);
 impl ProgramUuid {
     pub fn new() -> Self {
@@ -21,8 +22,18 @@ impl ProgramUuid {
     }
 }
 
-#[derive(Error, Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+impl Value<ProgramUuid> for ProgramUuid {
+    fn equals(&self, value: &ProgramUuid) -> bool {
+        self == value
+    }
+}
+
+#[derive(EnumString, EnumVariantNames, IntoStaticStr, Default, Error, Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+#[strum(serialize_all = "kebab_case")]
 pub enum ProgramError {
+    #[error("Nothing")]
+    #[default]
+    Unknown,
     #[error("No sources with uuid {0} found")]
     SourcesNotFound(SourcesUuid),
     #[error("No cfg with uuid {0} found")]
@@ -33,8 +44,33 @@ pub enum ProgramError {
     Cfg(CfgError),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
+impl Event<ProgramError> for ProgramError {
+    fn get_id(&self) -> String {
+        match &self {
+            ProgramError::Unknown => {
+                String::new()
+            },
+            ProgramError::CfgNotFound(..) | ProgramError::SourcesNotFound(..) => {
+                let id: &'static str = self.into();
+                format!("{}{}", Self::SEPARATOR, id)
+            },
+            ProgramError::Sources(error) => {
+                let id: &'static str = self.into();
+                format!("{}{}{}", Self::SEPARATOR, id, error.get_id().as_str())
+            },
+            ProgramError::Cfg(error) => {
+                let id: &'static str = self.into();
+                format!("{}{}{}", Self::SEPARATOR, id, error.get_id().as_str())
+            },
+        }
+    }
+}
+
+
+#[derive(Default, Debug, EnumString, EnumVariantNames, IntoStaticStr, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub enum ProgramEvent {
+    #[default]
+    Unknown,
     ProgramDiscovered {
         program_uuid: ProgramUuid,
         language: Languages,
@@ -48,6 +84,34 @@ pub enum ProgramEvent {
         program_uuid: ProgramUuid,
         event: <Cfg as Aggregate<Cfg>>::Event,
     },
+}
+
+impl Event<ProgramEvent> for ProgramEvent {
+    fn get_id(&self) -> String {
+        match &self {
+            ProgramEvent::Unknown => {
+                String::new()
+            },
+            ProgramEvent::ProgramDiscovered { .. } => {
+                let id: &'static str = self.into();
+                format!("{}{}", Self::SEPARATOR, id)
+            },
+            ProgramEvent::Sources {
+              program_uuid: _,
+              event
+            } => {
+                let id: &'static str = self.into();
+                format!("{}{}{}", Self::SEPARATOR, id, event.get_id().as_str())
+            },
+            ProgramEvent::Cfg {
+              program_uuid: _,
+              event
+            } => {
+                let id: &'static str = self.into();
+                format!("{}{}{}", Self::SEPARATOR, id, event.get_id().as_str())
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
@@ -110,6 +174,7 @@ impl Aggregate<Self> for Program {
 
     fn apply(&mut self, event: Self::Event) {
         match event {
+            Self::Event::Unknown => (),
             Self::Event::ProgramDiscovered {
                 program_uuid: _,
                 language,
@@ -119,10 +184,11 @@ impl Aggregate<Self> for Program {
                 self.path = path;
             }
             Self::Event::Sources {
-                program_uuid,
+                program_uuid: _,
                 event,
             } => {
                 match event {
+                    SourcesEvent::Unknown => {}
                     SourcesEvent::SourcesDiscovered {
                         sources_uuid,
                         language,

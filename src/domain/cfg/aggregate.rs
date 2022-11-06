@@ -2,17 +2,19 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::boxed::Box;
 use std::collections::HashMap;
+use strum_macros::{EnumString, EnumVariantNames, IntoStaticStr};
 use std::fmt::{Debug, Display};
 use thiserror::Error;
 
 use super::block::{Block, BlockUuid};
 use super::scope::{Scope, ScopeUuid};
+use crate::core::domain::Event;
 use crate::{
     core::domain::{new_uuid, Aggregate, Entity, Uuid},
     domain::sources::code::Code,
 };
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
 pub struct CfgUuid(Uuid);
 impl CfgUuid {
     pub fn new() -> Self {
@@ -26,14 +28,23 @@ impl Display for CfgUuid {
     }
 }
 
-#[derive(Error, Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(EnumString, EnumVariantNames, IntoStaticStr, Default, Error, Serialize, Deserialize, Debug, PartialEq, Eq, Hash, Clone)]
+#[strum(serialize_all = "kebab_case")]
 pub enum CfgError {
-    #[error("given sources was not loaded")]
+    #[default]
+    #[error("nothing")]
+    Nothing,
+    #[error("cfg_not_parsable")]
     CfgNotParsable,
 }
+impl Event<CfgError> for CfgError {}
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
+
+#[derive(Debug, Default, EnumString, IntoStaticStr, EnumVariantNames, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
+#[strum(serialize_all = "kebab_case")]
 pub enum CfgEvent {
+    #[default]
+    Unknown,
     CfgDiscovered {
         cfg_uuid: CfgUuid,
     },
@@ -54,6 +65,7 @@ pub enum CfgEvent {
         childs_uuids: Vec<ScopeUuid>,
     },
 }
+impl Event<CfgEvent> for CfgEvent {}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
 pub enum CfgCommand {
@@ -167,6 +179,7 @@ impl Aggregate<Self> for Cfg {
 
     fn apply(&mut self, event: Self::Event) {
         match event {
+            Self::Event::Unknown => {},
             Self::Event::CfgDiscovered { cfg_uuid } => {
                 self.uuid = cfg_uuid;
                 self.code = None;

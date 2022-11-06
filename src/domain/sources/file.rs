@@ -6,7 +6,7 @@ use std::collections::hash_set::Iter as HashSetIter;
 use std::collections::{BTreeMap, HashSet};
 use std::path::PathBuf;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
 pub struct FileUuid(Uuid);
 impl FileUuid {
     pub fn new() -> Self {
