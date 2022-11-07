@@ -68,6 +68,7 @@ impl Event<ProgramError> for ProgramError {
 
 
 #[derive(Default, Debug, EnumString, EnumVariantNames, IntoStaticStr, Clone, Serialize, Deserialize, PartialEq, Hash, Eq)]
+#[strum(serialize_all = "kebab_case")]
 pub enum ProgramEvent {
     #[default]
     Unknown,

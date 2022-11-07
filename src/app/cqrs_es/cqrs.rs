@@ -92,8 +92,6 @@ impl DomainCommand {
                     Some(program) => program,
                 };
 
-                println!("command");
-                    // Lock program
                 let writable_program = program.write().await;
                 let result = writable_program.handle(self.command.clone()).await;
                 drop(writable_program);
@@ -111,7 +109,6 @@ impl DomainCommand {
                     write_program.apply(event.clone());
 
                     let app_event = Events::new_domain(event);
-                    println!("publish event {:?}", app_event);
                     writable_event_bus.publish(app_event).await;
                 }
 

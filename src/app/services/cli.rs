@@ -28,6 +28,8 @@ pub enum Commands {
         path: std::path::PathBuf,
         #[clap(short, long, arg_enum, value_parser)]
         language: Language,
+        #[clap(short, long)]
+        daemon: bool,
     },
     /// Shell completion generator
     Complete {
@@ -48,7 +50,6 @@ impl ArgParserService {
 impl Service<Cli> for ArgParserService {
     async fn run(&mut self) -> Cli {
         let options = Cli::parse();
-        println!("{:?}", options);
         options
     }
 }

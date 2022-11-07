@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use strum::VariantNames;
-use std::{any::Any, fmt::Debug, hash::Hash};
+use std::{fmt::Debug, hash::Hash};
 use uuid::Uuid as ExternalUuid;
 
 #[derive(Default, Serialize, Deserialize, Debug, Clone, PartialEq, Hash, Eq)]
@@ -34,9 +34,16 @@ pub trait Event<T>: Debug + Clone + VariantNames + Into<&'static str> + Serializ
         }
         variants
     }
+
     fn get_id(&self) -> String {
         let id: &'static str = self.clone().into();
         format!("{}{}", Self::SEPARATOR, id)
+    }
+
+    fn is_child_event(&self, event: &Self) -> bool {
+        let id = event.get_id();
+        let is_child = id.starts_with(&self.get_id());
+        is_child
     }
 }
 

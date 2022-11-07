@@ -23,17 +23,14 @@ impl EventHandler for SimpleLogger {
 impl Logger for SimpleLogger {
     fn log(&self, event: Events) {
         match event {
-            Events::Domain(event) => {
-                let alo = serde_json::to_string(&event);
-                match serde_json::to_string(&event) {
-                    Ok(json) => {
-                        info!("{}", json.to_owned());
-                    }
-                    Err(_) => {
-                        panic!("Invalid events format in logger matching domain event");
-                    }
+            Events::Domain(event) => match serde_json::to_string(&event) {
+                Ok(json) => {
+                    info!("{}", json.to_owned());
                 }
-            }
+                Err(_) => {
+                    panic!("Invalid events format in logger matching domain event");
+                }
+            },
             Events::DomainError(event) => match serde_json::to_string(&event) {
                 Ok(json) => {
                     warn!("{}", json);

@@ -11,7 +11,7 @@ use crate::{app::cqrs_es::event::{
 }, core::domain::Event};
 
 pub struct MemoryEventBus {
-    handlers: MultiMap<String, EventHandlers>,
+    handlers: MultiMap<Events, EventHandlers>,
     queue: Arc<RwLock<PriorityQueue<Events, u8>>>,
 }
 
@@ -27,7 +27,7 @@ impl MemoryEventBus {
 #[async_trait]
 impl EventBus for MemoryEventBus {
     async fn subscribe(&mut self, event: Events, handler: EventHandlers) {
-        self.handlers.insert(event.get_id(), handler);
+        self.handlers.insert(event, handler);
     }
 
     async fn publish(&mut self, event: Events) {
@@ -46,23 +46,19 @@ impl EventBus for MemoryEventBus {
 
         match list {
             Some((event, _priority)) => {
-
                 let id = &event.get_id().clone();
-                let handlers = self.handlers.get_vec(id);
-                let handlers = match handlers {
-                    Some(handlers) => handlers,
-                    None => { return }
-                };
+                let handlers: Vec<&EventHandlers> = self.handlers
+                    .iter()
+                    .filter_map(|(to_check_event, handler)| {
+                        if to_check_event.is_child_event(&event) { Some(handler) } else {None} })
+                    .collect();
 
                 for handler in handlers.iter() {
                     let event = event.clone();
-                    // let handler = handler.clone();
-
                     match handler {
                         EventHandlers::Logger(logger) => {
                             let logger = logger.clone();
                             tokio::spawn(async move {
-                                println!("LAaaaaaa");
                                 let mut logger = logger.write().await;
                                 logger.notify(event);
                             });
@@ -70,8 +66,7 @@ impl EventBus for MemoryEventBus {
                     };
                 }
             },
-            None => (),
+            None => {},
         };
-
     }
 }

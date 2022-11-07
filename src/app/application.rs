@@ -3,13 +3,14 @@ use clap_complete::{generate, Generator};
 use tokio::sync::RwLock;
 use std::{io, sync::Arc};
 use std::path::PathBuf;
-use std::{thread, time};
 
 use super::cqrs_es::cqrs::{CommandBus, Commands};
 use super::cqrs_es::event::EventBus;
 use super::handlers::subscribe_logger;
 use super::services::Service;
 use super::services::cli::{ArgParserService, Cli, Commands as CliCommands , Language as CliLanguage};
+use super::services::logger::Logger;
+use crate::domain::languages::Languages;
 use crate::domain::program::{ProgramCommand, DiscoverProgram};
 use crate::domain::repository::Repository;
 use crate::infra::repositories::RepositoryInMemory;
@@ -44,7 +45,7 @@ impl Application {
                 let mut cmd = Cli::command();
                 print_completions(shell.clone(), &mut cmd);
             }
-            CliCommands::Parse { path, language } => {
+            CliCommands::Parse { path, language, daemon } => {
                 let language = match language {
                     CliLanguage::Rust => AvailableLanguages::rust(),
                     _ => AvailableLanguages::rust(),
@@ -52,36 +53,45 @@ impl Application {
 
                 let path: PathBuf = path.to_owned();
                 let repository: Arc<RwLock<dyn Repository>> = Arc::new(RwLock::new(RepositoryInMemory::new()));
-
-                let mut event_bus = MemoryEventBus::new();
-
-                subscribe_logger(logger, &mut event_bus);
-                let event_bus: Arc<RwLock<dyn EventBus + Sync + Send>> = Arc::new(RwLock::new(event_bus));
-                event_bus.write().await.run().await;
-                let command_bus: Arc<RwLock<dyn CommandBus>> =
-                  Arc::new(RwLock::new(MemoryCommandBus::new(repository, event_bus.clone())));
-
-                // Use case one: load program
-                let discover_command = DiscoverProgram {
-                    language,
-                    path,
-                };
-                let command = ProgramCommand::DiscoverProgram(discover_command.clone());
-                let command = Commands::new_domain(command);
-                {
-                    let mut command_bus = command_bus.write().await;
-                    command_bus.publish(command).await;
-                }
-                // let ten_millis = time::Duration::from_millis(10);
-                // thread::sleep(ten_millis);
-
-                loop {
-                    let mut event_bus = event_bus.write().await;
-                    let _ = event_bus.run().await;
-                    let mut command_bus = command_bus.write().await;
-                    let _ = command_bus.run().await;
+                if daemon.clone() {
+                    self.start_daemon(logger, repository, language, path).await;
                 }
             }
+        };
+    }
+
+    async fn start_daemon(
+      &self,
+      logger: Arc<RwLock<dyn Logger + Send + Sync>>,
+      repository: Arc<RwLock<dyn Repository>>,
+      language: Languages,
+      path: PathBuf,
+    ) {
+        let mut event_bus = MemoryEventBus::new();
+
+        subscribe_logger(logger, &mut event_bus).await;
+        let event_bus: Arc<RwLock<dyn EventBus + Sync + Send>> = Arc::new(RwLock::new(event_bus));
+        event_bus.write().await.run().await;
+        let command_bus: Arc<RwLock<dyn CommandBus>> =
+          Arc::new(RwLock::new(MemoryCommandBus::new(repository, event_bus.clone())));
+
+        // Use case one: load program
+        let discover_command = DiscoverProgram {
+            language,
+            path,
+        };
+        let command = ProgramCommand::DiscoverProgram(discover_command.clone());
+        let command = Commands::new_domain(command);
+        {
+            let mut command_bus = command_bus.write().await;
+            command_bus.publish(command).await;
+        }
+
+        loop {
+            let mut event_bus = event_bus.write().await;
+            let _ = event_bus.run().await;
+            let mut command_bus = command_bus.write().await;
+            let _ = command_bus.run().await;
         };
     }
 }

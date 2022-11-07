@@ -3,7 +3,7 @@ use crate::{
     infra::services::logger::SimpleLogger,
 };
 
-pub trait Logger: EventHandler + Send {
+pub trait Logger: EventHandler + Send + Sync {
     fn log(&self, event: Events);
 }
 
