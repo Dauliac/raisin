@@ -6,11 +6,12 @@ use strum_macros::{EnumString, EnumVariantNames, IntoStaticStr};
 use std::path::PathBuf;
 use thiserror::Error;
 
+use crate::app::cqrs_es::event;
 use crate::core::domain::{new_uuid, Aggregate, Entity, Uuid, Event, Value};
 use super::cfg::aggregate::{CfgError, CfgUuid};
 use super::languages::Languages;
 use super::sources::aggregate::{
-    DiscoverSources, Sources, SourcesError, SourcesEvent, SourcesUuid,
+    DiscoverSources, Sources, SourcesError, SourcesEvent, SourcesUuid, SourcesCommand,
 };
 use super::cfg::aggregate::Cfg;
 
@@ -164,13 +165,36 @@ impl Aggregate<Self> for Program {
                     language: command.language,
                     path: command.path,
                 };
-                events.push(event);
+                return Ok(vec![event]);
             }
-            Self::Command::Sources(command) => {}
+            Self::Command::Sources(command) => {
+                let result = self
+                    .sources
+                    .as_ref()
+                    .expect("please use discover program event before")
+                    .handle(command.clone())
+                    .await;
+
+                let result = match result {
+                    Ok(events) => {
+                        let events = events.into_iter()
+                            .map(|event|
+                                Self::Event::Sources {
+                                    program_uuid: self.uuid.clone(),
+                                    event,
+                                }
+                            )
+                            .collect();
+                        Ok(events)
+                    },
+                    Err(error) => Err(Self::Error::Sources(error))
+                };
+                return result;
+            }
             Self::Command::Cfg(command) => {}
         };
 
-        Ok(events)
+        Err(ProgramError::Unknown)
     }
 
     fn apply(&mut self, event: Self::Event) {
@@ -188,6 +212,9 @@ impl Aggregate<Self> for Program {
                 program_uuid: _,
                 event,
             } => {
+
+                self.sources.as_mut().expect("please use discover program event before").apply(event.clone());
+
                 match event {
                     SourcesEvent::Unknown => {}
                     SourcesEvent::SourcesDiscovered {
@@ -195,7 +222,8 @@ impl Aggregate<Self> for Program {
                         language,
                         path,
                     } => {}
-                    SourcesEvent::FileIndexed { file_uuid, path } => {}
+                    SourcesEvent::FileIndexed { file_uuid, path } => {
+                    }
                     SourcesEvent::FileNotIndexed {} => {}
                     SourcesEvent::FileContentLoaded { file_uuid, code } => {}
                 };
@@ -257,5 +285,14 @@ impl Program {
             },
             Ok(events),
         );
+    }
+
+    pub fn index_new_file(file_path: PathBuf) -> ProgramCommand {
+        let sources_command = SourcesCommand::index_file(file_path);
+        ProgramCommand::Sources(sources_command)
+    }
+
+    pub fn get_path(&self) -> PathBuf {
+        self.path.clone()
     }
 }

@@ -57,16 +57,12 @@ impl File {
     }
 
     pub fn get_text(&self) -> String {
-        let mut text = "".to_owned();
-
-        for line in self.get_lines() {
-            let line = line.1.clone();
-            // let line = line.1.clone();
+        self.get_lines().fold("".to_owned(), |mut text, line| {
+            let (_, line) = line;
             text += line.as_str();
             text += "\n";
-        }
-
-        text
+            text
+        })
     }
 
     pub fn include(&mut self, uuid: FileUuid) {

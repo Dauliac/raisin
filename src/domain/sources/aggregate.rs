@@ -77,6 +77,12 @@ pub enum SourcesCommand {
     LoadFileContent { file_uuid: FileUuid, code: Code },
 }
 
+impl SourcesCommand {
+    pub fn index_file(path: PathBuf) -> SourcesCommand {
+        SourcesCommand::IndexFile { path }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Sources {
     uuid: SourcesUuid,

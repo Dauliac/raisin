@@ -16,6 +16,7 @@ use crate::domain::repository::Repository;
 use crate::infra::repositories::RepositoryInMemory;
 use crate::infra::services::bus::cqrs::MemoryCommandBus;
 use crate::infra::services::bus::event_bus::MemoryEventBus;
+use crate::infra::services::sources::file_indexer::{FileIndexer, Config as FileIndexerConfig};
 use crate::{domain::languages::AvailableLanguages, infra::services::logger::SimpleLogger};
 
 pub struct Application {
@@ -71,11 +72,15 @@ impl Application {
 
         subscribe_logger(logger, &mut event_bus).await;
         let event_bus: Arc<RwLock<dyn EventBus + Sync + Send>> = Arc::new(RwLock::new(event_bus));
-        event_bus.write().await.run().await;
-        let command_bus: Arc<RwLock<dyn CommandBus>> =
-          Arc::new(RwLock::new(MemoryCommandBus::new(repository, event_bus.clone())));
+        event_bus
+          .write()
+          .await
+          .run()
+          .await;
 
-        // Use case one: load program
+        let command_bus: Arc<RwLock<dyn CommandBus>> =
+          Arc::new(RwLock::new(MemoryCommandBus::new(repository.clone(), event_bus.clone())));
+
         let discover_command = DiscoverProgram {
             language,
             path,
@@ -87,11 +92,47 @@ impl Application {
             command_bus.publish(command).await;
         }
 
+        // manually consume events while program is not saved in repository
+        while repository.read().await.read().is_none() {
+            {
+                let mut event_bus = event_bus.write().await;
+                let _ = event_bus.run().await;
+            }
+            {
+                let mut command_bus = command_bus.write().await;
+                let _ = command_bus.run().await;
+            }
+        }
+
+        self.index_sources(repository.clone(), command_bus.clone()).await;
+
         loop {
-            let mut event_bus = event_bus.write().await;
-            let _ = event_bus.run().await;
-            let mut command_bus = command_bus.write().await;
-            let _ = command_bus.run().await;
+            {
+                let mut event_bus = event_bus.write().await;
+                let _ = event_bus.run().await;
+            }
+            {
+                let mut command_bus = command_bus.write().await;
+                let _ = command_bus.run().await;
+            }
         };
+    }
+    async fn index_sources(&self,
+      repository: Arc<RwLock<dyn Repository>>,
+      command_bus: Arc<RwLock<dyn CommandBus>>,
+    ) {
+        let program = repository.read()
+          .await
+          .read()
+          .expect("Program was not indexed it app::index_sources call");
+
+        let config = FileIndexerConfig {
+            program,
+            command_bus,
+        };
+        let file_indexer_service = FileIndexer::new(config);
+        file_indexer_service
+          .run()
+          .await;
     }
 }

@@ -11,7 +11,7 @@ use crate::{
     domain::{
         program::{Program, ProgramCommand},
         repository::Repository,
-    }, infra::services::bus::event_bus,
+    },
 };
 
 use super::event::{EventBus, Events};
@@ -85,6 +85,7 @@ impl DomainCommand {
                 (program, result)
             },
             _ => {
+                println!("command {:?}", &self.command);
                 let program = match repository.read().await.read() {
                     None => {
                         panic!("No program loaded in the repository");
@@ -127,7 +128,7 @@ impl DomainCommand {
 }
 
 #[async_trait]
-pub trait CommandBus {
+pub trait CommandBus: Sync + Send {
     async fn publish(&mut self, command: Commands);
     async fn run(&mut self);
 }
