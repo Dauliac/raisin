@@ -93,12 +93,12 @@ pub struct Sources {
 
 impl Entity<Self> for Sources {
     type Uuid = SourcesUuid;
-    fn get_uuid(&self) -> SourcesUuid {
+    fn uuid(&self) -> SourcesUuid {
         self.uuid.clone()
     }
 
     fn equals(&self, entity: Box<Self>) -> bool {
-        self.uuid == entity.get_uuid()
+        self.uuid == entity.uuid()
     }
 }
 
@@ -188,11 +188,11 @@ impl Sources {
         return (Self::new(uuid, command.language, command.path), Ok(events));
     }
 
-    pub fn get_files(&self) -> Iter<FileUuid, File> {
+    pub fn files(&self) -> Iter<FileUuid, File> {
         self.files.iter()
     }
 
-    pub fn get_language(&self) -> Languages {
+    pub fn language(&self) -> Languages {
         self.language.clone()
     }
 }

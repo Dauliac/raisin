@@ -23,12 +23,12 @@ pub struct Scope {
 impl Entity<Self> for Scope {
     type Uuid = ScopeUuid;
 
-    fn get_uuid(&self) -> ScopeUuid {
+    fn uuid(&self) -> ScopeUuid {
         self.uuid.clone()
     }
 
     fn equals(&self, entity: Box<Self>) -> bool {
-        self.uuid == entity.get_uuid()
+        self.uuid == entity.uuid()
     }
 }
 
@@ -41,7 +41,7 @@ impl Scope {
         }
     }
 
-    pub fn get_parent(&self) -> &Option<ScopeUuid> {
+    pub fn parent(&self) -> &Option<ScopeUuid> {
         &self.parent
     }
 

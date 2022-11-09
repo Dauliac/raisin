@@ -43,17 +43,17 @@ impl Parser for TreeSitterParserService {
         let mut cfgs = Vec::new();
         let mut events = Vec::new();
 
-        // #[cfg(any(unix, target_os = "linux"))]
-        for file in sources.get_files() {
+        // #[cfg(any(unix, taros = "linux"))]
+        for file in sources.files() {
             let file = file.1;
-            let text = file.get_text();
-            let language = self.detect_language(&file.get_language());
+            let text = file.text();
+            let language = self.detect_language(&file.language());
             let mut parser = TsParser::new();
             // TODO check if bad language is an error ?
             // maybe yes ?
             parser.set_language(language).unwrap();
 
-            match parse(text, &mut parser, file.get_uuid()) {
+            match parse(text, &mut parser, file.uuid()) {
                 Ok((mut new_cfgs, mut new_events)) => {
                     cfgs.append(&mut new_cfgs);
                     events.append(&mut new_events);

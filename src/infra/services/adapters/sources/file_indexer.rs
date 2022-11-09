@@ -24,7 +24,8 @@ impl FileIndexer {
 
     pub async fn run(&self) {
         let program = self.config.program.write().await;
-        let sources_path = program.get_path();
+        let sources_path = program.path();
+        // TODO check if program path exists
         // if !path.exists() {
         //     return Err(Error::NotExists(path.to_str().unwrap().to_string()));
         // }

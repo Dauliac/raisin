@@ -21,7 +21,7 @@ impl SourceReader<'_> {
     pub async fn run(&mut self) -> Result<Vec<<Sources as Aggregate>::Event>, Error> {
         let mut events = Vec::new();
         for (_, file) in self.config.sources.edit_files() {
-            let reader = File::open(file.get_path()).unwrap();
+            let reader = File::open(file.path()).unwrap();
             let reader = BufReader::new(reader);
             for (index, line) in reader.lines().enumerate() {
                 let line = line.unwrap(); // Ignore errors.
@@ -29,7 +29,7 @@ impl SourceReader<'_> {
                 file.insert_line(index, line);
                 events.push(
                   SourcesEvent::FileContentLoaded {
-                    file_uuid: file.get_uuid(),
+                    file_uuid: file.uuid(),
                   }
                 )
             }

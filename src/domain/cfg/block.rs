@@ -21,12 +21,12 @@ pub struct Block {
 impl Entity<Self> for Block {
     type Uuid = BlockUuid;
 
-    fn get_uuid(&self) -> BlockUuid {
+    fn uuid(&self) -> BlockUuid {
         self.uuid.clone()
     }
 
     fn equals(&self, entity: Box<Self>) -> bool {
-        self.uuid == entity.get_uuid()
+        self.uuid == entity.uuid()
     }
 }
 
@@ -43,7 +43,7 @@ impl Block {
         self.precedents.insert(precedent_uuid)
     }
 
-    pub fn get_precedent(&self, precedent_uuid: &BlockUuid) -> Option<&BlockUuid> {
+    pub fn precedent(&self, precedent_uuid: &BlockUuid) -> Option<&BlockUuid> {
         self.precedents.get(precedent_uuid)
     }
 
@@ -51,7 +51,7 @@ impl Block {
         self.successors.insert(successor_uuid)
     }
 
-    pub fn get_successor(&self, successor_uuid: &BlockUuid) -> Option<&BlockUuid> {
+    pub fn successor(&self, successor_uuid: &BlockUuid) -> Option<&BlockUuid> {
         self.successors.get(successor_uuid)
     }
 }

@@ -16,7 +16,7 @@ use crate::domain::repository::Repository;
 use crate::infra::repositories::RepositoryInMemory;
 use crate::infra::services::bus::cqrs::MemoryCommandBus;
 use crate::infra::services::bus::event_bus::MemoryEventBus;
-use crate::infra::services::sources::file_indexer::{FileIndexer, Config as FileIndexerConfig};
+use crate::infra::services::adapters::sources::file_indexer::{FileIndexer, Config as FileIndexerConfig};
 use crate::{domain::languages::AvailableLanguages, infra::services::logger::SimpleLogger};
 
 pub struct Application {
@@ -24,7 +24,7 @@ pub struct Application {
 }
 
 fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
-    generate(gen, cmd, cmd.get_name().to_string(), &mut io::stdout());
+    generate(gen, cmd, cmd.name().to_string(), &mut io::stdout());
 }
 
 impl Application {

@@ -7,7 +7,7 @@ pub trait Language {
     const HAS_HEADER: bool;
     const HAS_GENERICS: bool;
     const IS_BDD: bool;
-    fn get_extentions(&self) -> Vec<&str>;
+    fn extentions(&self) -> Vec<&str>;
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -19,7 +19,7 @@ impl Language for Cpp {
     const HAS_HEADER: bool = true;
     const HAS_GENERICS: bool = true;
     const IS_BDD: bool = false;
-    fn get_extentions(&self) -> Vec<&str> {
+    fn extentions(&self) -> Vec<&str> {
         vec!["hpp", "cpp", "h", "c++"]
     }
 }
@@ -33,7 +33,7 @@ impl Language for Rust {
     const HAS_HEADER: bool = false;
     const HAS_GENERICS: bool = true;
     const IS_BDD: bool = false;
-    fn get_extentions(&self) -> Vec<&str> {
+    fn extentions(&self) -> Vec<&str> {
         vec!["rs"]
     }
 }
@@ -47,7 +47,7 @@ impl Language for C {
     const HAS_HEADER: bool = true;
     const HAS_GENERICS: bool = false;
     const IS_BDD: bool = false;
-    fn get_extentions(&self) -> Vec<&str> {
+    fn extentions(&self) -> Vec<&str> {
         vec!["c", "h"]
     }
 }
@@ -61,8 +61,22 @@ impl Language for Java {
     const HAS_HEADER: bool = false;
     const HAS_GENERICS: bool = true;
     const IS_BDD: bool = false;
-    fn get_extentions(&self) -> Vec<&str> {
+    fn extentions(&self) -> Vec<&str> {
         vec!["java"]
+    }
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Hash)]
+pub struct Python;
+impl Language for Python {
+    const NAME: &'static str = "python";
+    const IS_OBJECT_ORIENTED: bool = true;
+    const IS_FUNCTIONAL_ORIENTED: bool = true; // Question
+    const HAS_HEADER: bool = false;
+    const HAS_GENERICS: bool = true;
+    const IS_BDD: bool = false;
+    fn extentions(&self) -> Vec<&str> {
+        vec!["py"]
     }
 }
 
@@ -72,6 +86,7 @@ pub enum Languages {
     Cpp(Cpp),
     C(C),
     Java(Java),
+    Python(Python),
 }
 
 impl Default for Languages {
@@ -84,8 +99,12 @@ pub struct AvailableLanguages {}
 impl AvailableLanguages {
     pub fn rust() -> Languages {
         let lang = Rust {};
-
         Languages::Rust(lang)
+    }
+
+    pub fn python() -> Languages {
+        let lang = Python {};
+        Languages::Python(lang)
     }
 
     pub fn cpp() -> Languages {

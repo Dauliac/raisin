@@ -46,7 +46,7 @@ impl EventBus for MemoryEventBus {
 
         match list {
             Some((event, _priority)) => {
-                let id = &event.get_id().clone();
+                let id = &event.id().clone();
                 let handlers: Vec<&EventHandlers> = self.handlers
                     .iter()
                     .filter_map(|(to_check_event, handler)| {

@@ -9,7 +9,8 @@ use crate::domain::{
 
 // use self::tree_sitter::TreeSitterParserService;
 
-pub mod scope;
+pub mod languages;
+// pub mod scope;
 // pub mod tree_sitter;
 
 pub trait Parser {

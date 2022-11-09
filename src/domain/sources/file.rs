@@ -25,11 +25,11 @@ pub struct File {
 
 impl Entity<Self> for File {
     type Uuid = FileUuid;
-    fn get_uuid(&self) -> FileUuid {
+    fn uuid(&self) -> FileUuid {
         self.uuid.clone()
     }
     fn equals(&self, entity: Box<Self>) -> bool {
-        self.uuid == entity.get_uuid()
+        self.uuid == entity.uuid()
     }
 }
 
@@ -44,7 +44,7 @@ impl File {
         }
     }
 
-    pub fn get_path(&self) -> PathBuf {
+    pub fn path(&self) -> PathBuf {
         self.path.clone()
     }
 
@@ -52,12 +52,12 @@ impl File {
         self.lines.insert(line_number, line);
     }
 
-    pub fn get_lines(&self) -> MapIter<usize, String> {
+    pub fn lines(&self) -> MapIter<usize, String> {
         self.lines.iter()
     }
 
-    pub fn get_text(&self) -> String {
-        self.get_lines().fold("".to_owned(), |mut text, line| {
+    pub fn text(&self) -> String {
+        self.lines().fold("".to_owned(), |mut text, line| {
             let (_, line) = line;
             text += line.as_str();
             text += "\n";
@@ -69,11 +69,11 @@ impl File {
         self.includes.insert(uuid);
     }
 
-    pub fn get_includes(&self) -> HashSetIter<FileUuid> {
+    pub fn includes(&self) -> HashSetIter<FileUuid> {
         self.includes.iter()
     }
 
-    pub fn get_language(&self) -> Languages {
+    pub fn language(&self) -> Languages {
         self.language.clone()
     }
     // pub fn insert_content(&mut self, code: Code) {

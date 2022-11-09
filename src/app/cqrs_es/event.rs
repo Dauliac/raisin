@@ -63,15 +63,15 @@ impl Default for Events {
     }
 }
 impl EventAbstract<Events> for Events {
-    fn get_id(&self) -> String {
+    fn id(&self) -> String {
         match &self {
             Events::Domain(app_event) => {
                 let id: &'static str = self.into();
-                format!("{}{}{}", Self::SEPARATOR, id, app_event.event.get_id().as_str())
+                format!("{}{}{}", Self::SEPARATOR, id, app_event.event.id().as_str())
             },
             Events::DomainError(app_event) => {
                 let id: &'static str = self.into();
-                format!("{}{}{}", Self::SEPARATOR, id, app_event.event.get_id().as_str())
+                format!("{}{}{}", Self::SEPARATOR, id, app_event.event.id().as_str())
             }
         }
     }

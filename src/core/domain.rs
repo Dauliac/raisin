@@ -14,7 +14,7 @@ pub fn new_uuid() -> Uuid {
 pub trait Entity<T> {
     type Uuid;
 
-    fn get_uuid(&self) -> Self::Uuid;
+    fn uuid(&self) -> Self::Uuid;
     fn equals(&self, entity: Box<T>) -> bool;
 }
 
@@ -27,7 +27,7 @@ pub trait Const: Default + Debug + Clone + Serialize + DeserializeOwned + Partia
 
 pub trait Event<T>: Debug + Clone + VariantNames + Into<&'static str> + Serialize + DeserializeOwned + PartialEq + Hash + Eq + {
     const SEPARATOR: &'static str = "::";
-    fn get_id_variants() -> Vec<String> {
+    fn id_variants() -> Vec<String> {
         let mut variants = vec![];
         for id in Self::VARIANTS {
             variants.push(format!("{}{}", Self::SEPARATOR, id));
@@ -35,14 +35,14 @@ pub trait Event<T>: Debug + Clone + VariantNames + Into<&'static str> + Serializ
         variants
     }
 
-    fn get_id(&self) -> String {
+    fn id(&self) -> String {
         let id: &'static str = self.clone().into();
         format!("{}{}", Self::SEPARATOR, id)
     }
 
     fn is_child_event(&self, event: &Self) -> bool {
-        let id = event.get_id();
-        let is_child = id.starts_with(&self.get_id());
+        let id = event.id();
+        let is_child = id.starts_with(&self.id());
         is_child
     }
 }

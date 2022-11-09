@@ -91,11 +91,11 @@ pub struct Cfg {
 impl Entity<Self> for Cfg {
     type Uuid = CfgUuid;
 
-    fn get_uuid(&self) -> Self::Uuid {
+    fn uuid(&self) -> Self::Uuid {
         self.uuid.clone()
     }
     fn equals(&self, entity: Box<Cfg>) -> bool {
-        self.uuid == entity.get_uuid()
+        self.uuid == entity.uuid()
     }
 }
 
@@ -117,15 +117,15 @@ impl Cfg {
         return (Self::new(uuid), Ok(events));
     }
 
-    fn get_block(&self, uuid: &BlockUuid) -> Option<&Box<Block>> {
+    fn block(&self, uuid: &BlockUuid) -> Option<&Box<Block>> {
         self.blocks.get(uuid)
     }
 
-    fn get_scope(&self, uuid: &ScopeUuid) -> Option<&Box<Scope>> {
+    fn scope(&self, uuid: &ScopeUuid) -> Option<&Box<Scope>> {
         self.scopes.get(uuid)
     }
 
-    fn get_code(&self) -> Option<Code> {
+    fn code(&self) -> Option<Code> {
         self.code.clone()
     }
 }

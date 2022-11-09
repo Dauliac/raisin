@@ -43,7 +43,6 @@ impl Commands {
     }
 }
 
-
 impl DomainCommand {
     pub fn new(
         command: <Program as Aggregate<Program>>::Command,

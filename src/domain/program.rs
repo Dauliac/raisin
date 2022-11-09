@@ -46,7 +46,7 @@ pub enum ProgramError {
 }
 
 impl Event<ProgramError> for ProgramError {
-    fn get_id(&self) -> String {
+    fn id(&self) -> String {
         match &self {
             ProgramError::Unknown => {
                 String::new()
@@ -57,11 +57,11 @@ impl Event<ProgramError> for ProgramError {
             },
             ProgramError::Sources(error) => {
                 let id: &'static str = self.into();
-                format!("{}{}{}", Self::SEPARATOR, id, error.get_id().as_str())
+                format!("{}{}{}", Self::SEPARATOR, id, error.id().as_str())
             },
             ProgramError::Cfg(error) => {
                 let id: &'static str = self.into();
-                format!("{}{}{}", Self::SEPARATOR, id, error.get_id().as_str())
+                format!("{}{}{}", Self::SEPARATOR, id, error.id().as_str())
             },
         }
     }
@@ -89,7 +89,7 @@ pub enum ProgramEvent {
 }
 
 impl Event<ProgramEvent> for ProgramEvent {
-    fn get_id(&self) -> String {
+    fn id(&self) -> String {
         match &self {
             ProgramEvent::Unknown => {
                 String::new()
@@ -103,14 +103,14 @@ impl Event<ProgramEvent> for ProgramEvent {
               event
             } => {
                 let id: &'static str = self.into();
-                format!("{}{}{}", Self::SEPARATOR, id, event.get_id().as_str())
+                format!("{}{}{}", Self::SEPARATOR, id, event.id().as_str())
             },
             ProgramEvent::Cfg {
               program_uuid: _,
               event
             } => {
                 let id: &'static str = self.into();
-                format!("{}{}{}", Self::SEPARATOR, id, event.get_id().as_str())
+                format!("{}{}{}", Self::SEPARATOR, id, event.id().as_str())
             },
         }
     }
@@ -140,11 +140,11 @@ pub struct Program {
 
 impl Entity<Self> for Program {
     type Uuid = ProgramUuid;
-    fn get_uuid(&self) -> ProgramUuid {
+    fn uuid(&self) -> ProgramUuid {
         self.uuid.clone()
     }
     fn equals(&self, entity: Box<Program>) -> bool {
-        self.uuid == entity.get_uuid()
+        self.uuid == entity.uuid()
     }
 }
 
@@ -227,7 +227,7 @@ impl Aggregate<Self> for Program {
                     SourcesEvent::FileNotIndexed {} => {}
                     SourcesEvent::FileContentLoaded { file_uuid, code } => {}
                 };
-                // match self.sources.get_key_value()
+                // match self.sources.key_value()
             }
             Self::Event::Cfg {
                 program_uuid,
@@ -292,7 +292,7 @@ impl Program {
         ProgramCommand::Sources(sources_command)
     }
 
-    pub fn get_path(&self) -> PathBuf {
+    pub fn path(&self) -> PathBuf {
         self.path.clone()
     }
 }
